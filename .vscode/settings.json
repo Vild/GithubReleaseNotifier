@@ -1,0 +1,36 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+	"d.enableDMDImportTiming": false,
+	"editor.rulers": [
+		120, // soft max line length
+		160 // hard max line length
+	],
+	"editor.suggestLineHeight": 20,
+	"dfmt.braceStyle": "otbs",
+	"dfmt.alignSwitchStatements": true,
+	"dfmt.outdentAttributes": true,
+	"dfmt.splitOperatorAtLineEnd": false,
+	"dfmt.spaceAfterCast": false,
+	"dfmt.selectiveImportSpace": true,
+	"dfmt.compactLabeledStatements": true,
+	"files.exclude": {
+		".*": true,
+		"*.log": true,
+		"*~": true
+	},
+	"files.associations": {
+		"*.wild": "java",
+		"*.ds": "dscript",
+		"*.S": "asm",
+		"*.sass": "scss",
+		"Jenkinsfile": "declarative",
+		"hash_map": "cpp",
+		"*.tcc": "cpp",
+		"deque": "cpp",
+		"vector": "cpp",
+		"__config": "cpp",
+		"__nullptr": "cpp",
+		"limits": "cpp",
+		"stdexcept": "cpp"
+	}
+}

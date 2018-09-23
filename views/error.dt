@@ -1,0 +1,42 @@
+doctype html
+html
+	head
+		meta(charset="utf-8")
+		title Error - Github Release Notifier
+		link(rel="stylesheet", href="/css/style.css")
+		meta(name="theme-color", content="#22272e")
+		link(rel="stylesheet", href="/css/m-dark.compiled.css")
+		link(rel="stylesheet", href="/css/m-debug.css")
+		link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,400i,600%7CSource+Sans+Pro:400,400i,600&amp;subset=latin-ext")
+		link(rel="stylesheet", href="https://use.fontawesome.com/releases/v5.3.1/css/all.css", integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU", crossorigin="anonymous")
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+	body
+		header
+			nav#navigation
+				.m-container
+					.m-row
+						a.m-col-t-9.m-col-m-none.m-left-m#m-navbar-brand(href='/') Github Release Notifier - Powered by
+							|= " "
+							img(src="/img/dlogo.png", style="height: 1.2rem;position: relative;top: 0.3rem;", onclick="window.location = 'https://dlang.org/'; return false;")
+						a.m-col-t-3.m-hide-m.m-text-right#m-navbar-show(href='#navigation', title='Show navigation')
+						a.m-col-t-3.m-hide-m.m-text-right#m-navbar-hide(href='#', title='Hide navigation')
+						.m-col-t-12.m-show-m.m-col-m-none.m-right-m#m-navbar-collapse
+							.m-row
+								ol.m-col-t-12.m-col-m-none
+				a(style="position: absolute; right: 0px; top: 0px;", href='/quit') ⏻ Exit
+		main
+			article
+				.m-container
+					.m-row
+						.m-col-m-8.m-push-m-2
+							.m-landing-news.m-note.m-default
+								h1.m-text-center HTTP Error #{error.code}
+								hr
+								p An error has occured. We are really sorry about that!
+								- debug
+									p Error description: #{error.debugMessage}
+									b Exceptions:
+									textarea
+										|=error.exception
+								- else
+									p Error description: #{error.message}

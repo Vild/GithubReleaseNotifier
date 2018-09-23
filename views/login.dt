@@ -1,0 +1,20 @@
+extends base.dt
+
+block title
+	title Login - Github Release Notifier
+
+block content
+	.m-row
+		.m-col-m-8.m-push-m-2
+			.m-landing-news.m-note.m-default
+				h1.m-text-center Login
+				hr
+				form(method="POST", action="/login?from=#{from}")
+					input.m-fullwidth#user(name="username", type="text", placeholder="Username", value="wild")
+					input.m-fullwidth#password(name="password", type="password", placeholder="Password", value="secret")
+					- if (error.length)
+						p.error= error
+					input.m-button.m-success.m-fullwidth(type="submit", value="Login")
+				hr
+				div.m-button.m-warning.m-fullwidth
+					a(href="/register?from=#{from}") Register

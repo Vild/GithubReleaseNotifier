@@ -1,0 +1,54 @@
+extends base.dt
+
+block title
+	title Dashboard - Github Release Notifier
+
+block content
+	.m-row
+		.m-col-l-10.m-push-l-1
+			.m-landing-news.m-note.m-default
+				h1.m-text-center Projects
+				hr
+				div.m-button.m-success.m-fullwidth
+					a(href="/dashboard/addProject") Add Project
+				.m-scroll
+					table.m-table.m-fullwidth
+						thead
+							tr
+								th #
+								th Name
+								th Versions
+								//th Status
+								th Info
+						- import app;
+						- foreach (idx, project; /*Project.findRange(["_id" : ["$in": user.projects]])*/ projects)
+							- bool newRelease = project.archlinuxVersion && project.githubVersion > project.archlinuxVersion;
+							- auto style = newRelease ? "m-primary" : "m-flat";
+							tbody
+								tr(class="#{style}")
+									th(scope="row")=idx
+									td
+										b=project.name
+									td
+										i.fab.fa-github
+										|
+										|=project.githubVersion
+										- if (project.archlinuxVersion)
+											br
+											- style = "m-text";
+											- if (project.githubVersion > project.archlinuxVersion)
+												- style ~= " m-danger";
+											p(class="#{style}")
+												i.fab.fl-archlinux
+												|
+												|=project.archlinuxVersion
+									//td
+										- if (newRelease)
+											div.m-button.m-fullwidth.m-danger.dashboard-info
+												a(href="/project/#{project.name}/markAsRead") ❎
+										- else
+											div.m-button.m-fullwidth.m-flat.dashboard-info
+												a(href="#") ✅
+									td
+										div.m-button.m-fullwidth.m-info.dashboard-info
+											a(href="/project/#{project.name}") ⚙

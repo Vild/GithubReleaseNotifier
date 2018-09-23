@@ -1,0 +1,27 @@
+extends base.dt
+
+block title
+	title Register - Github Release Notifier
+
+block content
+	.m-row
+		.m-col-m-8.m-push-m-2
+			.m-landing-news.m-note.m-default
+				h1.m-text-center Register
+				hr
+				form(method="POST", action="/register?from=#{from}")
+					div.m-center
+						span.m-label.m-flat.m-primary Required
+					input.m-fullwidth(name="username", type="text", placeholder="Username", required)
+					input.m-fullwidth(name="email", type="email", placeholder="name@example.com", required)
+					input.m-fullwidth(name="password", type="password", placeholder="Password", minlength="8", required)
+					input.m-fullwidth(name="password2", type="password", placeholder="Password again", minlength="8", required)
+					div.m-center
+						span.m-label.m-flat.m-primary Optional
+					input.m-fullwidth(name="irc", type="text", placeholder="IRC nick on FreeNode")
+					- if (error.length)
+						p.error= error
+					input.m-button.m-success.m-fullwidth(type="submit", value="Register")
+				hr
+				div.m-button.m-warning.m-fullwidth
+					a(href="/login") Login

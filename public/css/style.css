@@ -1,0 +1,97 @@
+input {
+	font-family: 'Source Sans Pro', sans-serif;
+	font-weight: normal;
+	color: #22272e;
+}
+
+input[type="search"] { -webkit-appearance: textfield; }
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+	display: none;
+}
+
+.m-center {
+	text-align: center;
+}
+
+input[type="text"], input[type="password"], input[type="search"], input[type="email"] {
+	width: 100%;
+	height: 3rem;
+	font-size: 1.2rem;
+	border-width: 0;
+	color: #dcdcdc;
+	background-color: #22272e;
+	border-radius: 0.2rem;
+	margin-bottom: 1rem;
+	padding: 0 1rem;
+}
+
+input[type="submit"].m-button {
+	/*width: 100%;
+	height: 3rem;
+	font-size: 1.2rem;*/
+	border-width: 0;
+	border-radius: 0.2rem;
+	margin-bottom: 1rem;
+	text-align: center;
+	/*padding: 0 1rem;*/
+
+	display: inline-block;
+	border-radius: 0.2rem;
+	padding-top: 0.75rem;
+	padding-bottom: 0.75rem;
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
+	text-decoration: none;
+	font-size: 1.17rem;
+}
+input[type="submit"].m-button.m-fullwidth {
+	display: block;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	width: 100%;
+}
+
+input[type="submit"].m-button:hover { color: #a5c9ea; }
+
+input[type="submit"].m-button { color: #22272e; }
+input[type="submit"].m-button.m-flat { color: #dcdcdc; }
+input[type="submit"].m-button.m-flat:hover, input[type="submit"].m-button.m-default:focus, input[type="submit"].m-button.m-default:active {
+  color: #a5c9ea;
+}
+input[type="submit"].m-button.m-default { background-color: #dcdcdc; }
+input[type="submit"].m-button.m-primary { background-color: #a5c9ea; }
+input[type="submit"].m-button.m-success { background-color: #3bd267; }
+input[type="submit"].m-button.m-warning { background-color: #c7cf2f; }
+input[type="submit"].m-button.m-danger { background-color: #cd3431; }
+input[type="submit"].m-button.m-info { background-color: #2f83cc; }
+input[type="submit"].m-button.m-dim { background-color: #747474; }
+input[type="submit"].m-button.m-default:hover, input[type="submit"].m-button.m-default:focus, input[type="submit"].m-button.m-default:active {
+  background-color: #a5c9ea;
+}
+input[type="submit"].m-button.m-primary:hover, input[type="submit"].m-button.m-primary:focus, input[type="submit"].m-button.m-primary:active {
+  background-color: #dcdcdc;
+}
+input[type="submit"].m-button.m-success:hover, input[type="submit"].m-button.m-success:focus, input[type="submit"].m-button.m-success:active {
+  background-color: #acecbe;
+}
+input[type="submit"].m-button.m-warning:hover, input[type="submit"].m-button.m-warning:focus, input[type="submit"].m-button.m-warning:active {
+  background-color: #e9ecae;
+}
+input[type="submit"].m-button.m-danger:hover, input[type="submit"].m-button.m-danger:focus, input[type="submit"].m-button.m-danger:active {
+  background-color: #ff9391;
+}
+input[type="submit"].m-button.m-info:hover, input[type="submit"].m-button.m-info:focus, input[type="submit"].m-button.m-info:active {
+  background-color: #5297d7;
+}
+input[type="submit"].m-button.m-dim:hover, input[type="submit"].m-button.m-dim:focus, input[type="submit"].m-button.m-dim:active {
+  background-color: #acacac;
+}
+
+div.m-button.m-fullwidth.dashboard-info a {
+	padding: 0.5rem 0.2rem;
+	font-size: 1.2rem;
+	color: #000000 !important;
+}
