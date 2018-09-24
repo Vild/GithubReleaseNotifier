@@ -8,3 +8,4 @@ bin/
 views/_cached_*
 cache/
 bin/
+.gdb_history
