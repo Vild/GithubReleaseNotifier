@@ -4,6 +4,11 @@ input {
 	color: #22272e;
 }
 
+label {
+	display: none;
+	visibility: hidden;
+}
+
 input[type="search"] { -webkit-appearance: textfield; }
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,
@@ -94,4 +99,9 @@ div.m-button.m-fullwidth.dashboard-info a {
 	padding: 0.5rem 0.2rem;
 	font-size: 1.2rem;
 	color: #000000 !important;
+}
+
+body > header > nav #m-navbar-collapse li a.m-dim {
+	color: #747474;
+	/*border-color: #747474;*/
 }

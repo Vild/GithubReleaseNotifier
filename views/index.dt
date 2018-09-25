@@ -19,6 +19,6 @@ block content
 					div.m-button.m-warning.m-fullwidth
 						a(href="/register") Register
 				- else
-					| You are logged in as {}!
+					| You are logged in as #{auth.username}!
 					div.m-button.m-danger.m-fullwidth
 						a(href="/logout") Logout

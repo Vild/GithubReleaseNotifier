@@ -10,10 +10,18 @@ block content
 				h1.m-text-center Login
 				hr
 				form(method="POST", action="/login?from=#{from}")
-					input.m-fullwidth#user(name="username", type="text", placeholder="Username", value="wild")
-					input.m-fullwidth#password(name="password", type="password", placeholder="Password", value="secret")
+					label(for="username") Username
+					input.m-fullwidth#user(name="username", type="text", placeholder="Username")
+					br
+					label(for="password") Password
+					input.m-fullwidth#password(name="password", type="password", placeholder="Password")
+					br
 					- if (error.length)
-						p.error= error
+						p.m-text.m-danger
+							b Error:
+							br
+							|= error
+						br
 					input.m-button.m-success.m-fullwidth(type="submit", value="Login")
 				hr
 				div.m-button.m-warning.m-fullwidth

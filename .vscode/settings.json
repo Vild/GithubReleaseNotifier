@@ -16,7 +16,8 @@
 	"files.exclude": {
 		".*": true,
 		"*.log": true,
-		"*~": true
+		"*~": true,
+		"views/_cached_*": true
 	},
 	"files.associations": {
 		"*.wild": "java",

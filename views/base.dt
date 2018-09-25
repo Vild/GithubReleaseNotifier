@@ -25,15 +25,15 @@ html
 						.m-col-t-12.m-show-m.m-col-m-none.m-right-m#m-navbar-collapse
 							.m-row
 								ol.m-col-t-12.m-col-m-none
-									- void menuEntry(string name, string url)
+									- void menuEntry(string name, string url, bool needLogin)
 										li
-											a(id='#{req.requestURL == url ? "m-navbar-current" : ""}', href='#{url}')=name
-									- menuEntry("Index", "/");
+											a(id='#{req.requestURL == url ? "m-navbar-current" : ""}', class='#{(!needLogin || req.session) ? "" : "m-dim" }', href='#{url}')=name
+									- menuEntry("Index", "/", false);
+									- menuEntry("Dashboard", "/dashboard", true);
 									- if (!req.session)
-										- menuEntry("Login", "/login");
+										- menuEntry("Login", "/login", false);
 									- else
-										- menuEntry("Dashboard", "/dashboard");
-										- menuEntry("Logout", "/logout");
+										- menuEntry("Logout", "/logout", true);
 				a(style="position: absolute; right: 0px; top: 0px;", href='/quit') ⏻ Exit
 		main
 			article

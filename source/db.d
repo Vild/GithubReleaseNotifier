@@ -30,7 +30,14 @@ struct User {
 
 	@binary() char[] password;
 
+	bool isActivated;
+	uint activationCode;
+
 	BsonObjectID[] projects;
+
+	bool opCast(T : bool)() {
+		return bsonID.valid;
+	}
 
 	mixin MongoSchema;
 }
