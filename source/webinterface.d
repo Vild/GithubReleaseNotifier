@@ -79,10 +79,14 @@ public:
 			if (auto _ = "from" in req.query)
 				from = *_;
 
+			string username;
+			if (auto _ = "username" in req.form)
+				username = *_;
+
 			if (req.session && req.session.isKeySet("auth"))
 				redirect(from);
 			else
-				render!("login.dt", auth, from, error);
+				render!("login.dt", auth, from, username, error);
 		}
 
 		@errorDisplay!getLogin void postLogin(ValidUsername username, ValidPassword password, scope HTTPServerRequest req,
@@ -125,10 +129,22 @@ public:
 			if (auto _ = "from" in req.query)
 				from = *_;
 
+			string username;
+			if (auto _ = "username" in req.form)
+				username = *_;
+
+			string email;
+			if (auto _ = "email" in req.form)
+				email = *_;
+
+			string irc;
+			if (auto _ = "irc" in req.form)
+				irc = *_;
+
 			if (req.session && req.session.isKeySet("auth"))
 				redirect(from);
 			else
-				render!("register.dt", auth, from, error);
+				render!("register.dt", auth, from, username, email, irc, error);
 		}
 
 		@errorDisplay!getRegister void postRegister(ValidUsername username, ValidEmail email, ValidPassword password,
@@ -212,14 +228,14 @@ public:
 	@anyAuth {
 		void getDashboard(AuthInfo auth) {
 			// dfmt off
-			Project[] projects = [];
-				/*Project.loadCache("dlang/dmd", "dlang/dmd", "community/x86_64/dmd"),
+			auto projects = [ // Project.findRange(["_id" : ["$in": User.findOne(["_id": auth.userID]).projects]]);
+				Project.loadCache("dlang/dmd", "dlang/dmd", "community/x86_64/dmd"),
 				Project.loadCache("ldc-developers/ldc", "ldc-developers/ldc", "community/x86_64/ldc"),
 				Project.loadCache("dlang-community/dfmt", "dlang-community/dfmt", "community/x86_64/dfmt"),
 				Project.loadCache("dlang-community/D-Scanner", "dlang-community/D-Scanner", "community/x86_64/dscanner"),
 				Project.loadCache("dlang-community/DCD", "dlang-community/DCD", "community/x86_64/dcd"),
 				Project.loadCache("Pure-D/serve-d", "Pure-D/serve-d", null),
-			];*/
+			];
 			// dfmt on
 			render!("dashboard.dt", auth, projects);
 		}

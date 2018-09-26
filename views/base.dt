@@ -25,11 +25,18 @@ html
 						.m-col-t-12.m-show-m.m-col-m-none.m-right-m#m-navbar-collapse
 							.m-row
 								ol.m-col-t-12.m-col-m-none
+									- import std.algorithm : startsWith;
 									- void menuEntry(string name, string url, bool needLogin)
 										li
-											a(id='#{req.requestURL == url ? "m-navbar-current" : ""}', class='#{(!needLogin || req.session) ? "" : "m-dim" }', href='#{url}')=name
+											- bool currentPage;
+											- if (url.length > 1)
+												- currentPage = req.requestURL.startsWith(url);
+											- else
+												- currentPage = req.requestURL == url;
+											a(id='#{currentPage ? "m-navbar-current" : ""}', class='#{(!needLogin || req.session) ? "" : "m-dim" }', href='#{url}')=name
 									- menuEntry("Index", "/", false);
 									- menuEntry("Dashboard", "/dashboard", true);
+									- menuEntry("Settings", "/#settings", true);
 									- if (!req.session)
 										- menuEntry("Login", "/login", false);
 									- else
@@ -38,4 +45,7 @@ html
 		main
 			article
 				.m-container
-					block content
+					.m-row
+						.m-col-m-8.m-push-m-2
+							.m-landing-news.m-note.m-default
+								block content

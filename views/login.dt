@@ -4,25 +4,22 @@ block title
 	title Login - Github Release Notifier
 
 block content
-	.m-row
-		.m-col-m-8.m-push-m-2
-			.m-landing-news.m-note.m-default
-				h1.m-text-center Login
-				hr
-				form(method="POST", action="/login?from=#{from}")
-					label(for="username") Username
-					input.m-fullwidth#user(name="username", type="text", placeholder="Username")
-					br
-					label(for="password") Password
-					input.m-fullwidth#password(name="password", type="password", placeholder="Password")
-					br
-					- if (error.length)
-						p.m-text.m-danger
-							b Error:
-							br
-							|= error
-						br
-					input.m-button.m-success.m-fullwidth(type="submit", value="Login")
-				hr
-				div.m-button.m-warning.m-fullwidth
-					a(href="/register?from=#{from}") Register
+	h1.m-text-center Login
+	hr
+	form(method="POST", action="/login?from=#{from}")
+		label(for="username") Username
+		input.m-fullwidth#user(name="username", type="text", value="#{username}", placeholder="Username")
+		br
+		label(for="password") Password
+		input.m-fullwidth#password(name="password", type="password", placeholder="Password")
+		br
+		- if (error.length)
+			p.m-text.m-danger
+				b Error:
+				br
+				|= error
+			br
+		input.m-button.m-success.m-fullwidth(type="submit", value="Login")
+	hr
+	div.m-button.m-warning.m-fullwidth
+		a(href="/register?from=#{from}") Register

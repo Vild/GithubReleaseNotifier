@@ -4,41 +4,38 @@ block title
 	title Register - Github Release Notifier
 
 block content
-	.m-row
-		.m-col-m-8.m-push-m-2
-			.m-landing-news.m-note.m-default
-				h1.m-text-center Register
-				hr
-				form(method="POST", action="/register?from=#{from}")
-					div.m-center
-						b
-							span.m-label.m-flat.m-primary Required
-					label(for="username") Username
-					input.m-fullwidth(name="username", type="text", placeholder="Username", required)
-					br
-					label(for="email") Email
-					input.m-fullwidth(name="email", type="email", placeholder="name@example.com", required)
-					br
-					label(for="password") Password
-					input.m-fullwidth(name="password", type="password", placeholder="Password", minlength="8", required)
-					br
-					label(for="password2") Password again
-					input.m-fullwidth(name="password2", type="password", placeholder="Password again", minlength="8", required)
-					br
-					br
-					div.m-center
-						b
-							span.m-label.m-flat.m-primary Optional
-					label(for="irc") IRC nick on FreeNode
-					input.m-fullwidth(name="irc", type="text", placeholder="IRC nick on FreeNode")
-					br
-					- if (error.length)
-						p.m-text.m-danger
-							b Error:
-							br
-							|= error
-						br
-					input.m-button.m-success.m-fullwidth(type="submit", value="Register")
-				hr
-				div.m-button.m-warning.m-fullwidth
-					a(href="/login") Login
+	h1.m-text-center Register
+	hr
+	form(method="POST", action="/register?from=#{from}")
+		div.m-center
+			b
+				span.m-label.m-flat.m-primary Required
+		label(for="username") Username
+		input.m-fullwidth(name="username", type="text", value="#{username}", placeholder="Username", required)
+		br
+		label(for="email") Email
+		input.m-fullwidth(name="email", type="email", value="#{email}", placeholder="name@example.com", required)
+		br
+		label(for="password") Password
+		input.m-fullwidth(name="password", type="password", placeholder="Password", minlength="8", required)
+		br
+		label(for="password2") Password again
+		input.m-fullwidth(name="password2", type="password", placeholder="Password again", minlength="8", required)
+		br
+		br
+		div.m-center
+			b
+				span.m-label.m-flat.m-primary Optional
+		label(for="irc") IRC nick on FreeNode
+		input.m-fullwidth(name="irc", type="text", value="#{irc}", placeholder="IRC nick on FreeNode")
+		br
+		- if (error.length)
+			p.m-text.m-danger
+				b Error:
+				br
+				|= error
+			br
+		input.m-button.m-success.m-fullwidth(type="submit", value="Register")
+	hr
+	div.m-button.m-warning.m-fullwidth
+		a(href="/login") Login

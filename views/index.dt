@@ -4,21 +4,18 @@ block title
 	title Github Release Notifier
 
 block content
-	.m-row
-		.m-col-m-8.m-push-m-2
-			.m-landing-news.m-note.m-default
-				h1.m-text-center Welcome to Github Release Notifier
-				hr
-				|
-				| This is a cool service that will notify you when a Github project releases a new release
-				|
-				hr
-				- if (!req.session)
-					div.m-button.m-success.m-fullwidth
-						a(href="/login") Login
-					div.m-button.m-warning.m-fullwidth
-						a(href="/register") Register
-				- else
-					| You are logged in as #{auth.username}!
-					div.m-button.m-danger.m-fullwidth
-						a(href="/logout") Logout
+	h1.m-text-center Welcome to Github Release Notifier
+	hr
+	|
+	| This is a cool service that will notify you when a Github project releases a new release
+	|
+	hr
+	- if (!req.session)
+		div.m-button.m-success.m-fullwidth
+			a(href="/login") Login
+		div.m-button.m-warning.m-fullwidth
+			a(href="/register") Register
+	- else
+		| You are logged in as #{auth.username}!
+		div.m-button.m-danger.m-fullwidth
+			a(href="/logout") Logout

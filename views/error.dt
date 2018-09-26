@@ -27,7 +27,7 @@ html
 			article
 				.m-container
 					.m-row
-						.m-col-m-8.m-push-m-2
+						.m-col-l-10.m-push-l-1
 							.m-landing-news.m-note.m-default
 								h1.m-text-center HTTP Error #{error.code}
 								hr

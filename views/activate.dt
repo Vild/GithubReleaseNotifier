@@ -4,26 +4,23 @@ block title
 	title Activate account - Github Release Notifier
 
 block content
-	.m-row
-		.m-col-m-8.m-push-m-2
-			.m-landing-news.m-note.m-default
-				h1.m-text-center Please enter the code from the activation email
-				hr
-				form(method="POST", action="/activate?from=#{from}&username=#{username}")
-					//- label(for="username") Username
-					//- input.m-fullwidth(name="username", type="text", placeholder="Username", value="#{username}", disabled)
-					input(name="username", type="hidden", value="#{username}")
-					//-br
-					label(for="code") Activation code
-					input.m-fullwidth(name="code", type="text", placeholder="Activation code")
-					br
-					- if (error.length)
-						p.m-text.m-danger
-							b Error:
-							br
-							|= error
-						br
-					input.m-button.m-success.m-fullwidth(type="submit", value="Activate")
-				hr
-				div.m-button.m-warning.m-fullwidth
-					a(href="/activate?from=#{from}&username=#{username}&resend") Resend
+	h1.m-text-center Please enter the code from the activation email
+	hr
+	form(method="POST", action="/activate?from=#{from}&username=#{username}")
+		//- label(for="username") Username
+		//- input.m-fullwidth(name="username", type="text", placeholder="Username", value="#{username}", disabled)
+		input(name="username", type="hidden", value="#{username}")
+		//-br
+		label(for="code") Activation code
+		input.m-fullwidth(name="code", type="text", placeholder="Activation code")
+		br
+		- if (error.length)
+			p.m-text.m-danger
+				b Error:
+				br
+				|= error
+			br
+		input.m-button.m-success.m-fullwidth(type="submit", value="Activate")
+	hr
+	div.m-button.m-warning.m-fullwidth
+		a(href="/activate?from=#{from}&username=#{username}&resend") Resend
