@@ -10,6 +10,7 @@ import deimos.sodium;
 import vibe.core.net;
 import std.string;
 import std.uni;
+import std.exception;
 import email;
 
 // https://github.com/vibe-d/vibe.d/blob/03b85894ff8e88f3f92001c0750f809aa3ccb1f8/examples/web-auth/source/app.d
@@ -86,8 +87,6 @@ public:
 
 		@errorDisplay!getLogin void postLogin(ValidUsername username, ValidPassword password, scope HTTPServerRequest req,
 				scope HTTPServerResponse res) {
-			import vibe.core.net : enforce;
-
 			// A 'generic' error message is uses so an attacker don't know if the username or if the password was wrong!
 			string loginError = "Invalid username or password!";
 
@@ -160,7 +159,7 @@ public:
 			redirect("/activate?from=" ~ from ~ "&username=" ~ username);
 		}
 
-		void getActivate(scope HTTPServerRequest req, string _error = null) {
+		@errorDisplay!getActivate void getActivate(scope HTTPServerRequest req, string _error = null) {
 			string error = _error;
 			Nullable!AuthInfo auth;
 			string from = "/";
@@ -172,42 +171,35 @@ public:
 			else if (auto _ = "username" in req.query)
 				username = *_;
 
-			enforce(username, "Username is missing! Please use the link in the email!");
+			if (!_error) {
+				enforce(username, "Username is missing! Please use the link in the email!");
 
-			string code = "";
-			if (auto _ = "code" in req.query)
-				code = *_;
+				if ("resend" in req.query) {
+					Nullable!User user = User.tryFindOne(["username" : username.toLower]);
+					enforce(!user.isNull, "Cannot find the user!");
+					enforce(!user.isActivated, "The account is already activated!");
 
-			if ("resend" in req.query) {
-				Nullable!User user = User.tryFindOne(["username" : username.toLower]);
-				enforce(!user.isNull, "Cannot find the user!");
-				enforce(!user.isActivated, "The account is already activated!");
+					user.activationCode = randombytes_random();
+					user.save();
 
-				user.activationCode = randombytes_random();
-				user.save();
-
-				runWorkerTask(&sendActivationEmail, user.username, user.email, user.activationCode);
+					runWorkerTask(&sendActivationEmail, user.username, user.email, user.activationCode);
+				} else if (auto code = "code" in req.query) {
+					_activateAccount(username, *code);
+					redirect(from);
+				}
 			}
 
 			if (req.session && req.session.isKeySet("auth"))
 				redirect(from);
 			else
-				render!("activate.dt", auth, from, username, code, error);
+				render!("activate.dt", auth, from, username, error);
 		}
 
 		@errorDisplay!getActivate void postActivate(ValidUsername username, string code, scope HTTPServerRequest req,
 				scope HTTPServerResponse res) {
 			import std.format : format;
 
-			Nullable!User user = User.tryFindOne(["username" : username.toLower]);
-			enforce(!user.isNull, "Cannot find the user!");
-			enforce(!user.isActivated, "The account is already activated!");
-
-			enforce(code.toUpper == format!"%08X"(user.activationCode), "Activation code is wrong!");
-
-			user.isActivated = true;
-
-			user.save();
+			_activateAccount(username, code);
 
 			string from = "/";
 			if (auto _ = "from" in req.query)
@@ -220,14 +212,14 @@ public:
 	@anyAuth {
 		void getDashboard(AuthInfo auth) {
 			// dfmt off
-			Project[] projects = [
-				Project.loadCache("dlang/dmd", "dlang/dmd", "community/x86_64/dmd"),
+			Project[] projects = [];
+				/*Project.loadCache("dlang/dmd", "dlang/dmd", "community/x86_64/dmd"),
 				Project.loadCache("ldc-developers/ldc", "ldc-developers/ldc", "community/x86_64/ldc"),
 				Project.loadCache("dlang-community/dfmt", "dlang-community/dfmt", "community/x86_64/dfmt"),
 				Project.loadCache("dlang-community/D-Scanner", "dlang-community/D-Scanner", "community/x86_64/dscanner"),
 				Project.loadCache("dlang-community/DCD", "dlang-community/DCD", "community/x86_64/dcd"),
 				Project.loadCache("Pure-D/serve-d", "Pure-D/serve-d", null),
-			];
+			];*/
 			// dfmt on
 			render!("dashboard.dt", auth, projects);
 		}
@@ -241,30 +233,18 @@ public:
 			terminateSession();
 			redirect("/");
 		}
+	}
 
-		/*
+private:
+	void _activateAccount(string username, string code) {
+		Nullable!User user = User.tryFindOne(["username" : username.toLower]);
+		enforce(!user.isNull, "Cannot find the user!");
+		enforce(!user.isActivated, "The account is already activated!");
 
-		// GET /settings
-		// authUser is automatically injected based on the authenticate() result
-		void getSettings(AuthInfo auth, string _error = null)
-		{
-			auto error = _error;
-			render!("settings.dt", error, auth);
-		}
+		enforce(code.toUpper == format!"%08X"(user.activationCode), "Activation code is wrong!");
 
-		// POST /settings
-		// @errorDisplay will render errors using the getSettings method.
-		// authUser gets injected with the associated authenticate()
-		@errorDisplay!getSettings
-		void postSettings(bool premium, bool admin, ValidUsername user_name, AuthInfo authUser, scope HTTPServerRequest req)
-		{
-			AuthInfo s = authUser;
-			s.userName = user_name;
-			s.premium = premium;
-			s.admin = admin;
-			req.session.set("auth", s);
-			redirect("/");
-}
-		*/
+		user.isActivated = true;
+
+		user.save();
 	}
 }

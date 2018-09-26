@@ -18,7 +18,7 @@ block content
 								th #
 								th Name
 								th Versions
-								//th Status
+								//- th Status
 								th Info
 						- import app;
 						- foreach (idx, project; /*Project.findRange(["_id" : ["$in": user.projects]])*/ projects)
@@ -42,7 +42,7 @@ block content
 												i.fab.fl-archlinux
 												|
 												|=project.archlinuxVersion
-									//td
+									//- td
 										- if (newRelease)
 											div.m-button.m-fullwidth.m-danger.dashboard-info
 												a(href="/project/#{project.name}/markAsRead") ❎

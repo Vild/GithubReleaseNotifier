@@ -10,11 +10,12 @@ block content
 				h1.m-text-center Please enter the code from the activation email
 				hr
 				form(method="POST", action="/activate?from=#{from}&username=#{username}")
-					label(for="username") Username
-					input.m-fullwidth(name="username", type="text", placeholder="Username", value="#{username}", disabled)
-					br
+					//- label(for="username") Username
+					//- input.m-fullwidth(name="username", type="text", placeholder="Username", value="#{username}", disabled)
+					input(name="username", type="hidden", value="#{username}")
+					//-br
 					label(for="code") Activation code
-					input.m-fullwidth(name="code", type="text", value="#{code}", placeholder="Activation code")
+					input.m-fullwidth(name="code", type="text", placeholder="Activation code")
 					br
 					- if (error.length)
 						p.m-text.m-danger
