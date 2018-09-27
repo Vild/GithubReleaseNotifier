@@ -1,5 +1,6 @@
 import vibe.vibe;
 import mongoschema;
+import vibe.db.mongo.sessionstore;
 
 import db;
 import webinterface;
@@ -19,7 +20,7 @@ void main() {
 	auto settings = new HTTPServerSettings;
 	settings.port = 4000;
 	settings.bindAddresses = ["0.0.0.0"];
-	settings.sessionStore = new MemorySessionStore;
+	settings.sessionStore = new MongoSessionStore("mongodb://127.0.0.1/" ~ mongoDBName, "sessions");
 	settings.errorPageHandler = (scope HTTPServerRequest req, HTTPServerResponse res, HTTPServerErrorInfo error) {
 		logError("==HTTP Error %d==
 An error has occured. We are really sorry about that!
@@ -58,7 +59,7 @@ Exceptions:
 			import std.conv : text;
 
 			chromium = spawnShell(
-				"chromium --user-data-dir=/tmp/webdev-chromium-instance --incognito --app=http://" ~ settings.bindAddresses[0]
+				"chromium --user-data-dir=/tmp/webdev-chromium-instance --app=http://" ~ settings.bindAddresses[0]
 				~ ":" ~ settings.port.text ~ "/");
 			while (!tryWait(chromium).terminated)
 				sleep(1.seconds);

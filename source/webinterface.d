@@ -226,18 +226,39 @@ public:
 	}
 
 	@anyAuth {
-		void getDashboard(AuthInfo auth) {
-			// dfmt off
-			auto projects = [ // Project.findRange(["_id" : ["$in": User.findOne(["_id": auth.userID]).projects]]);
-				Project.loadCache("dlang/dmd", "dlang/dmd", "community/x86_64/dmd"),
-				Project.loadCache("ldc-developers/ldc", "ldc-developers/ldc", "community/x86_64/ldc"),
-				Project.loadCache("dlang-community/dfmt", "dlang-community/dfmt", "community/x86_64/dfmt"),
-				Project.loadCache("dlang-community/D-Scanner", "dlang-community/D-Scanner", "community/x86_64/dscanner"),
-				Project.loadCache("dlang-community/DCD", "dlang-community/DCD", "community/x86_64/dcd"),
-				Project.loadCache("Pure-D/serve-d", "Pure-D/serve-d", null),
-			];
-			// dfmt on
+		void getDashboard(AuthInfo auth, scope HTTPServerRequest req) {
+			auto projects = Project.findRange(["_id" : ["$in" : User.findOne(["_id" : auth.userID]).projects]]);
 			render!("dashboard.dt", auth, projects);
+		}
+
+		void getAddProject(AuthInfo auth, scope HTTPServerRequest req, string _error = null) {
+			string error = _error;
+			string name;
+			if (auto _ = "name" in req.form)
+				name = *_;
+
+			string githubName;
+			if (auto _ = "githubName" in req.form)
+				githubName = *_;
+
+			bool notifyViaEmail = !!("notifyViaEmail" in req.form);
+			bool notifyViaIRC = !!("notifyViaIRC" in req.form);
+
+			string archlinuxName;
+			if (auto _ = "archlinuxName" in req.form)
+				archlinuxName = *_;
+
+			render!("add_project.dt", auth, name, githubName, notifyViaEmail, notifyViaIRC, archlinuxName, error);
+		}
+
+		@errorDisplay!getAddProject void postAddProject(AuthInfo auth, string name, string githubName, bool notifyViaEmail,
+				bool notifyViaIRC, string archlinuxName, scope HTTPServerRequest req) {
+			import std.algorithm : count;
+			import std.format : format;
+
+			enforce(githubName.count("/") == 1, format!"Github path is in the wrong format! count: %d"(githubName.count("/")));
+			enforce(!archlinuxName || archlinuxName.count("/") == 2, format!"The Archlinux path is in the wrong format! %s count: %d"(!archlinuxName, archlinuxName.count("/")));
+			enforce(false, "Not implemented!");
 		}
 
 		void postLogout() {

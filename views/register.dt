@@ -10,24 +10,24 @@ block content
 		div.m-center
 			b
 				span.m-label.m-flat.m-primary Required
-		label(for="username") Username
 		input.m-fullwidth(name="username", type="text", value="#{username}", placeholder="Username", required)
+		label(for="username") Username
 		br
-		label(for="email") Email
 		input.m-fullwidth(name="email", type="email", value="#{email}", placeholder="name@example.com", required)
+		label(for="email") Email
 		br
-		label(for="password") Password
 		input.m-fullwidth(name="password", type="password", placeholder="Password", minlength="8", required)
+		label(for="password") Password
 		br
-		label(for="password2") Password again
 		input.m-fullwidth(name="password2", type="password", placeholder="Password again", minlength="8", required)
+		label(for="password2") Password again
 		br
 		br
 		div.m-center
 			b
 				span.m-label.m-flat.m-primary Optional
-		label(for="irc") IRC nick on FreeNode
 		input.m-fullwidth(name="irc", type="text", value="#{irc}", placeholder="IRC nick on FreeNode")
+		label(for="irc") IRC nick on FreeNode
 		br
 		- if (error.length)
 			p.m-text.m-danger

@@ -7,11 +7,13 @@ public import vibe.data.bson;
 
 import vercmp;
 
+enum mongoDBName = "githubreleasenotifier";
+
 MongoClient connectToMongo() {
 	MongoClient mongo = connectMongoDB("127.0.0.1");
-	mongo.getCollection("githubreleasenotifier.users").register!User;
-	mongo.getCollection("githubreleasenotifier.versionFiles").register!VersionFile;
-	mongo.getCollection("githubreleasenotifier.projects").register!Project;
+	mongo.getCollection(mongoDBName ~ ".users").register!User;
+	mongo.getCollection(mongoDBName ~ ".versionFiles").register!VersionFile;
+	mongo.getCollection(mongoDBName ~ ".projects").register!Project;
 	return mongo;
 }
 
@@ -55,35 +57,27 @@ struct VersionFile {
 struct Project {
 	string name; // dlang/dmd
 
+	// TODO: Change this to just git
+	// git ls-remove <URL> - will give all the tags and sha1 hashes
 	BsonObjectID githubFile;
 	string githubName;
-	Version githubVersion;
+	@property Version githubVersion() {
+		import github;
+
+		return getGithubVersions(this)[0];
+	}
 
 	///// If this project have a ArchLinux package, fill these out!
 	BsonObjectID archlinuxFile;
 	string archlinuxName; // community/x86_64/dmd
-	Version archlinuxVersion;
-
-	// bool notifyViaEmail;
-	// bool notifyViaIrc;
-
-	debug static Project loadCache(string name, string githubName, string archlinuxName) {
-		import github;
+	@property Version archlinuxVersion() {
 		import archlinux;
 
-		Project p;
-		p.name = name;
-
-		p.githubName = githubName;
-		//p.githubURL = "https://github.com/" ~ githubName;
-		p.githubVersion = getGithubVersions(p)[0];
-
-		p.archlinuxName = archlinuxName;
-		//p.archlinuxNameURL = "https://www.archlinux.org/packages/" ~ archlinuxName;
-		p.archlinuxVersion = getArchlinuxVersion(p);
-
-		return p;
+		return getArchlinuxVersion(this);
 	}
+
+	bool notifyViaEmail;
+	bool notifyViaIRC;
 
 	mixin MongoSchema;
 }

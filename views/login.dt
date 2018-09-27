@@ -7,11 +7,11 @@ block content
 	h1.m-text-center Login
 	hr
 	form(method="POST", action="/login?from=#{from}")
-		label(for="username") Username
 		input.m-fullwidth#user(name="username", type="text", value="#{username}", placeholder="Username")
+		label(for="username") Username
 		br
-		label(for="password") Password
 		input.m-fullwidth#password(name="password", type="password", placeholder="Password")
+		label(for="password") Password
 		br
 		- if (error.length)
 			p.m-text.m-danger

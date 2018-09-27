@@ -11,8 +11,8 @@ block content
 		//- input.m-fullwidth(name="username", type="text", placeholder="Username", value="#{username}", disabled)
 		input(name="username", type="hidden", value="#{username}")
 		//-br
-		label(for="code") Activation code
 		input.m-fullwidth(name="code", type="text", placeholder="Activation code")
+		label(for="code") Activation code
 		br
 		- if (error.length)
 			p.m-text.m-danger

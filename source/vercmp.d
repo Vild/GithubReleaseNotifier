@@ -15,6 +15,10 @@ struct Version {
 		return format!"%s%s%s%s%s"(epoch, epoch.length ? ":" : "", version_, release.length ? "-" : "", release);
 	}
 
+	int opCmp(const(Version) other) const {
+		return opCmp(other);
+	}
+
 	int opCmp(ref const(Version) other) const {
 		int cmp(string a, string b) {
 			if (a == b)

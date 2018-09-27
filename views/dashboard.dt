@@ -7,7 +7,7 @@ block content
 	h1.m-text-center Projects
 	hr
 	div.m-button.m-success.m-fullwidth
-		a(href="/dashboard/addproject") Add Project
+		a(href="/add_project") Add Project
 	.m-scroll
 		table.m-table.m-fullwidth
 			thead
