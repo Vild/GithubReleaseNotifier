@@ -11,7 +11,7 @@ import vibe.core.net;
 import std.string;
 import std.uni;
 import std.exception;
-import email;
+import actions.email;
 
 // https://github.com/vibe-d/vibe.d/blob/03b85894ff8e88f3f92001c0750f809aa3ccb1f8/examples/web-auth/source/app.d
 
@@ -19,6 +19,10 @@ struct AuthInfo {
 @safe:
 	string username;
 	BsonObjectID userID;
+
+	@property User user() @trusted {
+		return User.findById(userID);
+	}
 
 	/*bool isAdmin() {
 		return this.admin;
@@ -227,7 +231,7 @@ public:
 
 	@anyAuth {
 		void getDashboard(AuthInfo auth, scope HTTPServerRequest req) {
-			auto projects = Project.findRange(["_id" : ["$in" : User.findOne(["_id" : auth.userID]).projects]]);
+			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]);
 			render!("dashboard.dt", auth, projects);
 		}
 
@@ -257,8 +261,39 @@ public:
 			import std.format : format;
 
 			enforce(githubName.count("/") == 1, format!"Github path is in the wrong format! count: %d"(githubName.count("/")));
-			enforce(!archlinuxName || archlinuxName.count("/") == 2, format!"The Archlinux path is in the wrong format! %s count: %d"(!archlinuxName, archlinuxName.count("/")));
-			enforce(false, "Not implemented!");
+			enforce(!archlinuxName || archlinuxName.count("/") == 2,
+					format!"The Archlinux path is in the wrong format! %s count: %d"(!archlinuxName, archlinuxName.count("/")));
+
+			Project p;
+			p.name = name;
+			p.githubName = githubName;
+			if (p.githubName.length) {
+				import db.cache;
+
+				auto id = addToCacheGithub(githubName);
+				enforce(!id.isNull, "The github name is wrong!");
+				p.githubFile = id.get();
+			}
+
+			p.archlinuxName = archlinuxName;
+			if (p.archlinuxName.length) {
+				import db.cache;
+
+				auto id = addToCacheFile("https://www.archlinux.org/packages/" ~ archlinuxName ~ "/json/");
+				enforce(!id.isNull, "The Archlinux name is wrong!");
+				p.archlinuxFile = id.get();
+			}
+
+			p.notifyViaEmail = notifyViaEmail;
+			p.notifyViaIRC = notifyViaIRC;
+
+			p.save();
+
+			User user = auth.user;
+			user.projects ~= p.bsonID;
+			user.save();
+
+			redirect("/dashboard");
 		}
 
 		void postLogout() {

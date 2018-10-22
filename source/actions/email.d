@@ -1,4 +1,4 @@
-module email;
+module actions.email;
 import std.format;
 import vibe.core.log;
 

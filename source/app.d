@@ -4,7 +4,7 @@ import vibe.db.mongo.sessionstore;
 
 import db;
 import webinterface;
-import cache;
+import db.cache;
 
 import std.process : spawnShell, tryWait, kill, Pid;
 
@@ -49,7 +49,7 @@ Exceptions:
 
 	listenHTTP(settings, router);
 
-	runWorkerTask(&cacheTask);
+	Cache.startTasks();
 
 	debug {
 		scope (exit)
@@ -59,8 +59,7 @@ Exceptions:
 			import std.conv : text;
 
 			chromium = spawnShell(
-				"chromium --user-data-dir=/tmp/webdev-chromium-instance --app=http://" ~ settings.bindAddresses[0]
-				~ ":" ~ settings.port.text ~ "/");
+				"chromium --user-data-dir=/tmp/webdev-chromium-instance --app=http://" ~ settings.bindAddresses[0] ~ ":" ~ settings.port.text ~ "/");
 			while (!tryWait(chromium).terminated)
 				sleep(1.seconds);
 

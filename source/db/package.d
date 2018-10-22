@@ -5,7 +5,7 @@ public import mongoschema;
 import mongoschema.aliases : name, ignore, unique, binary;
 public import vibe.data.bson;
 
-import vercmp;
+import utils.vercmp;
 
 enum mongoDBName = "githubreleasenotifier";
 
@@ -13,6 +13,7 @@ MongoClient connectToMongo() {
 	MongoClient mongo = connectMongoDB("127.0.0.1");
 	mongo.getCollection(mongoDBName ~ ".users").register!User;
 	mongo.getCollection(mongoDBName ~ ".versionFiles").register!VersionFile;
+	mongo.getCollection(mongoDBName ~ ".githubVersionFiles").register!GitHubVersionFile;
 	mongo.getCollection(mongoDBName ~ ".projects").register!Project;
 	return mongo;
 }
@@ -53,6 +54,14 @@ struct VersionFile {
 	mixin MongoSchema;
 }
 
+struct GitHubVersionFile {
+	@unique string url;
+	@binary() ubyte[] data;
+	size_t lastUpdated;
+
+	mixin MongoSchema;
+}
+
 // A project instance for a user
 struct Project {
 	string name; // dlang/dmd
@@ -62,16 +71,16 @@ struct Project {
 	BsonObjectID githubFile;
 	string githubName;
 	@property Version githubVersion() {
-		import github;
+		import backends.github;
 
-		return getGithubVersions(this)[0];
+		return getGitHubVersions(this)[0].version_;
 	}
 
 	///// If this project have a ArchLinux package, fill these out!
 	BsonObjectID archlinuxFile;
 	string archlinuxName; // community/x86_64/dmd
 	@property Version archlinuxVersion() {
-		import archlinux;
+		import backends.archlinux;
 
 		return getArchlinuxVersion(this);
 	}

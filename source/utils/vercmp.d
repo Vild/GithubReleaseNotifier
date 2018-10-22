@@ -1,4 +1,4 @@
-module vercmp;
+module utils.vercmp;
 
 struct Version {
 	string epoch;
