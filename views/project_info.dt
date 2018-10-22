@@ -1,0 +1,49 @@
+extends base.dt
+
+block title
+	title #{projectName} - Github Release Notifier
+
+block content
+	h1.m-text-center=projectName
+	hr
+	- if (project.isNull)
+		p
+			| The project could not be found.
+			| Could be because database slowness?
+	- else
+		form(method="POST", action="/project/#{projectName}")
+			div.m-center
+				b
+					span.m-label.m-flat.m-primary Required
+			input.m-fullwidth(name="name", type="text", value="#{project.name}", placeholder="Name", required)
+			label(for="name") Name
+			br
+			input.m-fullwidth(name="githubName", type="text", value="#{project.githubName}", placeholder="Github path (dlang/dmd, powernex/powernex, etc.)", required)
+			label(for="githubName") Github path (#[i dlang/dmd], #[i powernex/powernex], etc.)
+			br
+			br
+			div.m-center
+				b
+					span.m-label.m-flat.m-primary Optional
+			input.m-fullwidth(name="archlinuxName", type="text", value="#{project.archlinuxName}", placeholder="ArchLinux path (community/x86_64/dmd, etc.)")
+			label(for="archlinuxName") ArchLinux path (#[i community/x86_64/dmd], etc.)
+			br
+			br
+			div.m-center
+				b
+					span.m-label.m-flat.m-primary Notify options
+			br
+			input(name="notifyViaEmail", id="notifyViaEmail", type="checkbox", checked=project.notifyViaEmail)
+			label.forceShow(for="notifyViaEmail") Notify via email
+			br
+			input.big(name="notifyViaIRC", id="notifyViaIRC", type="checkbox", checked=project.notifyViaIRC)
+			label.forceShow(for="notifyViaIRC") Notify via IRC
+			br
+			- if (error.length)
+				p.m-text.m-danger
+					b Error:
+					br
+					|= error
+				br
+			input.m-button.m-success.m-fullwidth(type="submit", value="Update Project")
+

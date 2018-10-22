@@ -235,6 +235,20 @@ public:
 			render!("dashboard.dt", auth, projects);
 		}
 
+		@path("/project/:projectName")
+		void getProject(AuthInfo auth, string _projectName, scope HTTPServerRequest req, string _error = null) {
+			import std.algorithm : find;
+
+			string error = _error;
+			string projectName = _projectName;
+
+			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]).find!"a.name == b"(projectName);
+			Nullable!Project project;
+			if (!projects.empty)
+				project = projects.front;
+			render!("project_info.dt", auth, projectName, project, error);
+		}
+
 		void getAddProject(AuthInfo auth, scope HTTPServerRequest req, string _error = null) {
 			string error = _error;
 			string name;

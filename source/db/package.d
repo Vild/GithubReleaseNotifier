@@ -64,7 +64,7 @@ struct GitHubVersionFile {
 
 // A project instance for a user
 struct Project {
-	string name; // dlang/dmd
+	@unique string name; // dlang/dmd
 
 	// TODO: Change this to just git
 	// git ls-remove <URL> - will give all the tags and sha1 hashes
