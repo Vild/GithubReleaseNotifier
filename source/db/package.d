@@ -57,7 +57,57 @@ struct User {
 		return bsonID.valid;
 	}
 
+	//TODO: move?
+	void checkUpdate() {
+		import actions.email;
+		import backends.github;
+
+		BsonObjectID[] updatedProjects;
+		foreach (BsonObjectID pID; projects) {
+			Nullable!Project pNull = Project.tryFindById(pID);
+			if (pNull.isNull)
+				continue;
+
+			Project p = pNull.get();
+			updatedProjects ~= pID;
+
+			auto versions = getGitHubVersions(p, p.ignorePreRelease);
+			if (!versions.length)
+				continue;
+
+			if (getVersion(p.lastNotifiedVersion) == versions[0].version_) // TODO: <=
+				continue;
+
+			if (p.notifyViaEmail)
+				sendNewReleaseEmail(username, email, p.name, versions[0]);
+
+			p.lastNotifiedVersion = versions[0].version_.toString;
+			p.save();
+		}
+
+		if (projects.length != updatedProjects.length) {
+			updatedProjects = projects;
+			save();
+		}
+	}
+
 	mixin MongoSchema;
+}
+
+// TODO: MOVE!
+void userCheckUpdates() {
+	import vibe.core.log;
+	import vibe.core.core;
+	import std.datetime;
+	connectToMongo();
+	logInfo("User - Update checker task started...");
+
+	while (true) {
+		foreach (User u; User.findAll)
+			u.checkUpdate();
+
+		sleep(10.seconds);
+	}
 }
 
 // Represents a file that needs to be pulled to check stuff for projects
@@ -65,6 +115,9 @@ struct VersionFile {
 	@unique string url;
 	@binary() ubyte[] data;
 	size_t lastUpdated;
+
+	// TODO: BsonObjectID[] users;
+	// or BsonObjectID[] projects;
 
 	mixin MongoSchema;
 }
@@ -74,12 +127,20 @@ struct GitHubVersionFile {
 	@binary() ubyte[] data;
 	size_t lastUpdated;
 
+	// TODO: BsonObjectID[] users;
+	// or BsonObjectID[] projects;
+
 	mixin MongoSchema;
 }
 
 // A project instance for a user
 struct Project {
-	@unique string name; // dlang/dmd
+	string name; // dlang/dmd
+
+	// TODO: BsonObjectID[] owners;
+	// or BsonObjectID owner;
+
+	string lastNotifiedVersion;
 
 	// TODO: Change this to just git
 	// git ls-remove <URL> - will give all the tags and sha1 hashes

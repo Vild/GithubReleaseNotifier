@@ -52,6 +52,7 @@ Exceptions:
 	listenHTTP(settings, router);
 
 	Cache.startTasks();
+	runWorkerTask(&userCheckUpdates);
 
 	debug {
 		scope (exit)
