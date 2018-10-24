@@ -20,11 +20,12 @@ struct GitHubVersion {
 "node_id": "MDM6UmVmMTI1NzA3MDp2Mi4wODMuMC1iZXRhLjE="
 */
 
-GitHubVersion[] getGitHubVersions(ref Project project) {
+GitHubVersion[] getGitHubVersions(ref Project project, bool ignorePreRelease) {
 	import dxml.parser;
 	import std.file : readText;
 	import vibe.data.json;
 	import std.algorithm.mutation : remove;
+	import std.algorithm.sorting : sort;
 
 	string[] output;
 
@@ -42,7 +43,8 @@ GitHubVersion[] getGitHubVersions(ref Project project) {
 		v.version_.epoch = null;
 
 	// TODO: Add option for this (re-add beta and rc releases)
-	versions = versions.remove!"a.version_.release.length";
+	if (ignorePreRelease)
+		versions = versions.remove!"a.version_.release.length";
 
-	return versions;
+	return versions.sort!"a.version_ > b.version_".array;
 }

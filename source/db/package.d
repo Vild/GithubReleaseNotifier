@@ -10,11 +10,26 @@ import utils.vercmp;
 enum mongoDBName = "githubreleasenotifier";
 
 MongoClient connectToMongo() {
-	MongoClient mongo = connectMongoDB("127.0.0.1");
-	mongo.getCollection(mongoDBName ~ ".users").register!User;
-	mongo.getCollection(mongoDBName ~ ".versionFiles").register!VersionFile;
-	mongo.getCollection(mongoDBName ~ ".githubVersionFiles").register!GitHubVersionFile;
-	mongo.getCollection(mongoDBName ~ ".projects").register!Project;
+	import vibe.core.log;
+
+	static MongoClient mongo;
+
+	if (!mongo) {
+		logInfo("Connecting to MongoDB...");
+		mongo = connectMongoDB("127.0.0.1");
+	}
+
+	// TODO: Fix mongoschema with better multithread/multifiber support
+	if (!User.collection.name.length)
+		mongo.getCollection(mongoDBName ~ ".users").register!User;
+	if (!VersionFile.collection.name.length)
+		mongo.getCollection(mongoDBName ~ ".versionFiles").register!VersionFile;
+	if (!GitHubVersionFile.collection.name.length)
+		mongo.getCollection(mongoDBName ~ ".githubVersionFiles").register!GitHubVersionFile;
+	if (!Project.collection.name.length)
+		mongo.getCollection(mongoDBName ~ ".projects").register!Project;
+	logInfo("MongoDB setup is done");
+
 	return mongo;
 }
 
@@ -73,7 +88,8 @@ struct Project {
 	@property Version githubVersion() {
 		import backends.github;
 
-		return getGitHubVersions(this)[0].version_;
+		auto versions = getGitHubVersions(this, ignorePreRelease);
+		return versions.length ? versions[0].version_ : Version.init;
 	}
 
 	///// If this project have a ArchLinux package, fill these out!
@@ -84,6 +100,8 @@ struct Project {
 
 		return getArchlinuxVersion(this);
 	}
+
+	bool ignorePreRelease = true;
 
 	bool notifyViaEmail;
 	bool notifyViaIRC;

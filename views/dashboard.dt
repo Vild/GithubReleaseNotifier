@@ -17,8 +17,11 @@ block content
 					th Versions
 					//- th Status
 					th Info
+			- import std.algorithm.sorting : sort;
+			- import std.uni : toLower;
+			- import db: Project;
 			- size_t idx; /* DocumentRange does not have a index with it*/
-			- foreach (project; projects)
+			- foreach (Project project; projects) /* .sort!"toLower(a.name) < toLower(b.name)"*/
 				- scope(exit) idx++;
 				- bool newRelease = project.archlinuxVersion && project.githubVersion > project.archlinuxVersion;
 				- auto style = newRelease ? "m-primary" : "m-flat";

@@ -21,12 +21,12 @@ static:
 
 private:
 	void versionFileTask() {
-		auto mongo = connectToMongo();
+		connectToMongo();
 		logInfo("VersionFile - Cache task started...");
 
 		while (true) {
 			long currentTime = Clock.currTime.toUnixTime!long;
-			foreach (VersionFile file; VersionFile.findRange(["lastUpdated" : ["$lte" : (currentTime - 10 * 60)]])) {
+			foreach (VersionFile file; VersionFile.findRange(["lastUpdated" : ["$lte" : (currentTime - 30 * 60)]])) {
 				logInfo("Downloading: %s", file.url);
 				try {
 					Appender!(ubyte[]) data;
@@ -46,7 +46,7 @@ private:
 	}
 
 	void githubVersionFileTask() {
-		auto mongo = connectToMongo();
+		connectToMongo();
 		logInfo("GitHubVersionFile - Cache task started...");
 
 		while (true) {
@@ -67,7 +67,7 @@ private:
 			}
 
 			long currentTime = Clock.currTime.toUnixTime!long;
-			auto r = GitHubVersionFile.findRange(["lastUpdated" : ["$lte" : (currentTime - 10 * 60)]]);
+			auto r = GitHubVersionFile.findRange(["lastUpdated" : ["$lte" : (currentTime - 30 * 60)]]);
 			for (size_t i; !r.empty && i < remaining; r.popFront, i++) {
 				GitHubVersionFile file = r.front;
 				logInfo("Downloading: %s", file.url);

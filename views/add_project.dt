@@ -26,6 +26,14 @@ block content
 		br
 		div.m-center
 			b
+				span.m-label.m-flat.m-primary Version options
+		br
+		input(name="ignorePreRelease", id="ignorePreRelease", type="checkbox", checked=ignorePreRelease)
+		label.forceShow(for="ignorePreRelease") Ignore the pre-release version (A.B.C-XXX, The XXX part)
+		br
+		br
+		div.m-center
+			b
 				span.m-label.m-flat.m-primary Notify options
 		br
 		input(name="notifyViaEmail", id="notifyViaEmail", type="checkbox", checked=notifyViaEmail)

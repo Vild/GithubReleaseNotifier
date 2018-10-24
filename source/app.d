@@ -17,6 +17,8 @@ shared static this() {
 
 debug Pid chromium;
 void main() {
+	connectToMongo();
+
 	auto settings = new HTTPServerSettings;
 	settings.port = 4000;
 	settings.bindAddresses = ["0.0.0.0"];

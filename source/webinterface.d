@@ -2,6 +2,7 @@ module webinterface;
 
 import vibe.http.server;
 import vibe.core.core;
+import vibe.core.log;
 import vibe.web.web;
 import vibe.web.auth;
 import db;
@@ -39,14 +40,12 @@ struct AuthInfo {
 
 @requiresAuth class WebInterface {
 private:
-	MongoClient _mongo;
-
 	enum _pwOpsLimit = crypto_pwhash_OPSLIMIT_INTERACTIVE;
 	enum _pwMemLimit = crypto_pwhash_MEMLIMIT_INTERACTIVE;
 public:
 	this() {
 		sodium_init();
-		_mongo = connectToMongo();
+		connectToMongo();
 
 		if (!VersionFile.countAll()) {
 			// dfmt off
@@ -231,12 +230,68 @@ public:
 
 	@anyAuth {
 		void getDashboard(AuthInfo auth, scope HTTPServerRequest req) {
-			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]);
+			auto query(Q, S)(Q q, S s) {
+				struct Query(Q, S) {
+					Q query;
+					S orderby;
+				}
+
+				return Query!(Q, S)(q, s);
+			}
+
+			auto projects = Project.findRange(query(["_id" : ["$in" : auth.user.projects]], ["name" : 1]));
 			render!("dashboard.dt", auth, projects);
 		}
 
 		@path("/project/:projectName")
-		void getProject(AuthInfo auth, string _projectName, scope HTTPServerRequest req, string _error = null) {
+		@errorDisplay!getEditProject void postEditProject(AuthInfo auth, string _projectName, string name, string githubName,
+				bool ignorePreRelease, bool notifyViaEmail, bool notifyViaIRC, string archlinuxName, scope HTTPServerRequest req) {
+			import std.algorithm : count;
+			import std.format : format;
+
+			string projectName = _projectName;
+
+			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]).find!"a.name == b"(projectName);
+			enforce(!projects.empty, "Project is missing!");
+			Project p = projects.front;
+
+			enforce(githubName.count("/") == 1, format!"Github path is in the wrong format! count: %d"(githubName.count("/")));
+			enforce(!archlinuxName || archlinuxName.count("/") == 2,
+					format!"The Archlinux path is in the wrong format! %s count: %d"(!archlinuxName, archlinuxName.count("/")));
+
+			p.name = name;
+			p.githubName = githubName;
+			if (p.githubName.length) {
+				import db.cache;
+
+				auto id = addToCacheGithub(githubName);
+				enforce(!id.isNull, "The github name is wrong!");
+				p.githubFile = id.get();
+			} else
+				p.githubFile = BsonObjectID.init;
+
+			p.archlinuxName = archlinuxName;
+			if (p.archlinuxName.length) {
+				import db.cache;
+
+				auto id = addToCacheFile("https://www.archlinux.org/packages/" ~ archlinuxName ~ "/json/");
+				enforce(!id.isNull, "The Archlinux name is wrong!");
+				p.archlinuxFile = id.get();
+			} else
+				p.archlinuxFile = BsonObjectID.init;
+
+			p.ignorePreRelease = ignorePreRelease;
+
+			p.notifyViaEmail = notifyViaEmail;
+			p.notifyViaIRC = notifyViaIRC;
+
+			p.save();
+
+			redirect("/dashboard");
+		}
+
+		@path("/project/:projectName")
+		void getEditProject(AuthInfo auth, string _projectName, scope HTTPServerRequest req, string _error = null) {
 			import std.algorithm : find;
 
 			string error = _error;
@@ -246,7 +301,28 @@ public:
 			Nullable!Project project;
 			if (!projects.empty)
 				project = projects.front;
-			render!("project_info.dt", auth, projectName, project, error);
+			render!("edit_project.dt", auth, projectName, project, error);
+		}
+
+		@path("/project/:projectName/remove")
+		@errorDisplay!getEditProject void getRemoveProject(AuthInfo auth, string _projectName, scope HTTPServerRequest requestURL) {
+			import std.algorithm : find, countUntil, remove;
+
+			string projectName = _projectName;
+
+			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]).find!"a.name == b"(projectName);
+			if (projects.empty)
+				redirect("/dashboard");
+
+			Project p = projects.front;
+
+			auto user = auth.user;
+			user.projects = user.projects.remove(user.projects.countUntil(p.bsonID));
+			user.save();
+
+			p.remove();
+
+			redirect("/dashboard");
 		}
 
 		void getAddProject(AuthInfo auth, scope HTTPServerRequest req, string _error = null) {
@@ -259,6 +335,8 @@ public:
 			if (auto _ = "githubName" in req.form)
 				githubName = *_;
 
+			bool ignorePreRelease = !("name" in req.form) || !!("ignorePreRelease" in req.form);
+
 			bool notifyViaEmail = !!("notifyViaEmail" in req.form);
 			bool notifyViaIRC = !!("notifyViaIRC" in req.form);
 
@@ -266,11 +344,11 @@ public:
 			if (auto _ = "archlinuxName" in req.form)
 				archlinuxName = *_;
 
-			render!("add_project.dt", auth, name, githubName, notifyViaEmail, notifyViaIRC, archlinuxName, error);
+			render!("add_project.dt", auth, name, githubName, ignorePreRelease, notifyViaEmail, notifyViaIRC, archlinuxName, error);
 		}
 
-		@errorDisplay!getAddProject void postAddProject(AuthInfo auth, string name, string githubName, bool notifyViaEmail,
-				bool notifyViaIRC, string archlinuxName, scope HTTPServerRequest req) {
+		@errorDisplay!getAddProject void postAddProject(AuthInfo auth, string name, string githubName, bool ignorePreRelease,
+				bool notifyViaEmail, bool notifyViaIRC, string archlinuxName, scope HTTPServerRequest req) {
 			import std.algorithm : count;
 			import std.format : format;
 
@@ -297,6 +375,8 @@ public:
 				enforce(!id.isNull, "The Archlinux name is wrong!");
 				p.archlinuxFile = id.get();
 			}
+
+			p.ignorePreRelease = ignorePreRelease;
 
 			p.notifyViaEmail = notifyViaEmail;
 			p.notifyViaIRC = notifyViaIRC;
