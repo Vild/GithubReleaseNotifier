@@ -13,15 +13,15 @@ block content
 		input.m-fullwidth(name="name", type="text", value="#{name}", placeholder="Name", required)
 		label(for="name") Name
 		br
-		input.m-fullwidth(name="githubName", type="text", value="#{githubName}", placeholder="Github path (dlang/dmd, powernex/powernex, etc.)", required)
-		label(for="githubName") Github path (#[i dlang/dmd], #[i powernex/powernex], etc.)
+		input.m-fullwidth(name="gitName", type="text", value="#{gitName}", placeholder="Git URL (https://github.com/PowerNex/PowerNex.git, etc.)", required)
+		label(for="gitName") Git URL (#[i https://github.com/PowerNex/PowerNex.git], etc.)
 		br
 		br
 		div.m-center
 			b
 				span.m-label.m-flat.m-primary Optional
-		input.m-fullwidth(name="archlinuxName", type="text", value="#{archlinuxName}", placeholder="ArchLinux path (community/x86_64/dmd, etc.)")
-		label(for="archlinuxName") ArchLinux path (#[i community/x86_64/dmd], etc.)
+		input.m-fullwidth(name="archlinuxName", type="text", value="#{archlinuxName}", placeholder="ArchLinux package name (community/x86_64/dmd, etc.)")
+		label(for="archlinuxName") ArchLinux package name (#[i community/x86_64/dmd], etc.)
 		br
 		br
 		div.m-center
@@ -42,7 +42,7 @@ block content
 		input.big(name="notifyViaIRC", id="notifyViaIRC", type="checkbox", checked=notifyViaIRC)
 		label.forceShow(for="notifyViaIRC") Notify via IRC
 		br
-		- if (error.length)
+		- if (error)
 			p.m-text.m-danger
 				b Error:
 				br

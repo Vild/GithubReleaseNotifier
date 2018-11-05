@@ -4,13 +4,16 @@ public import vibe.db.mongo.mongo;
 public import mongoschema;
 import mongoschema.aliases : name, ignore, unique, binary;
 public import vibe.data.bson;
+public import vibe.core.log;
 
 import utils.vercmp;
 
 enum mongoDBName = "githubreleasenotifier";
+enum DBCollection;
 
 MongoClient connectToMongo() {
 	import vibe.core.log;
+	import std.traits : getSymbolsByUDA;
 
 	static MongoClient mongo;
 
@@ -19,15 +22,12 @@ MongoClient connectToMongo() {
 		mongo = connectMongoDB("127.0.0.1");
 	}
 
-	// TODO: Fix mongoschema with better multithread/multifiber support
-	if (!User.collection.name.length)
-		mongo.getCollection(mongoDBName ~ ".users").register!User;
-	if (!VersionFile.collection.name.length)
-		mongo.getCollection(mongoDBName ~ ".versionFiles").register!VersionFile;
-	if (!GitHubVersionFile.collection.name.length)
-		mongo.getCollection(mongoDBName ~ ".githubVersionFiles").register!GitHubVersionFile;
-	if (!Project.collection.name.length)
-		mongo.getCollection(mongoDBName ~ ".projects").register!Project;
+	static foreach (dbCollection; getSymbolsByUDA!(mixin(__MODULE__), DBCollection))
+		if (!dbCollection.collection.name.length) { // TODO: Fix mongoschema with better multithread/multifiber support
+			mongo.getCollection(mongoDBName ~ "." ~ dbCollection.stringof).register!dbCollection;
+			logInfo("%s.%s mapped to %s", mongoDBName, dbCollection.stringof, dbCollection.stringof);
+		}
+
 	logInfo("MongoDB setup is done");
 
 	return mongo;
@@ -40,7 +40,7 @@ enum NotificationFrequency {
 }
 
 // The user that is logged in
-struct User {
+@DBCollection struct User {
 	@unique string username;
 	string email; /// Where to send the email to
 	string ircNick; /// On freenode
@@ -51,115 +51,97 @@ struct User {
 	bool isActivated;
 	uint activationCode;
 
-	BsonObjectID[] projects;
-
 	bool opCast(T : bool)() {
 		return bsonID.valid;
 	}
 
-	//TODO: move?
-	void checkUpdate() {
-		import actions.email;
-		import backends.github;
-
-		BsonObjectID[] updatedProjects;
-		foreach (BsonObjectID pID; projects) {
-			Nullable!Project pNull = Project.tryFindById(pID);
-			if (pNull.isNull)
-				continue;
-
-			Project p = pNull.get();
-			updatedProjects ~= pID;
-
-			auto versions = getGitHubVersions(p, p.ignorePreRelease);
-			if (!versions.length)
-				continue;
-
-			if (getVersion(p.lastNotifiedVersion) == versions[0].version_) // TODO: <=
-				continue;
-
-			if (p.notifyViaEmail)
-				sendNewReleaseEmail(username, email, p.name, versions[0]);
-
-			p.lastNotifiedVersion = versions[0].version_.toString;
-			p.save();
-		}
-
-		if (projects.length != updatedProjects.length) {
-			updatedProjects = projects;
-			save();
-		}
-	}
-
 	mixin MongoSchema;
 }
 
-// TODO: MOVE!
-void userCheckUpdates() {
-	import vibe.core.log;
-	import vibe.core.core;
-	import std.datetime;
-	connectToMongo();
-	logInfo("User - Update checker task started...");
+// TODO: Add support for AUR
+enum RemoteSite {
+	// git ls-remove <URL> - will give all the tags and sha1 hashes
+	git,
+	archlinux
+}
 
-	while (true) {
-		foreach (User u; User.findAll)
-			u.checkUpdate();
+struct ProcessedVersion {
+	Version version_;
+	Bson extraData;
 
-		sleep(10.seconds);
+	int opCmp(const(ProcessedVersion) other) const {
+		return opCmp(other);
+	}
+
+	int opCmp(ref const(ProcessedVersion) other) const {
+		return version_.opCmp(other.version_);
 	}
 }
 
 // Represents a file that needs to be pulled to check stuff for projects
-struct VersionFile {
+@DBCollection struct VersionInfo {
 	@unique string url;
-	@binary() ubyte[] data;
-	size_t lastUpdated;
 
-	// TODO: BsonObjectID[] users;
-	// or BsonObjectID[] projects;
+	@byName RemoteSite remoteSite;
+	size_t lastUpdated; // Timestamp
 
-	mixin MongoSchema;
-}
+	BsonObjectID[] projects; // If empty, remove file
 
-struct GitHubVersionFile {
-	@unique string url;
-	@binary() ubyte[] data;
-	size_t lastUpdated;
+	static void addProject(BsonObjectID id, ref Project p) {
+		VersionInfo.update(["_id" : id], ["$addToSet" : ["projects" : p.bsonID]]);
+	}
 
-	// TODO: BsonObjectID[] users;
-	// or BsonObjectID[] projects;
+	static void removeProject(BsonObjectID id, ref Project p) {
+		VersionInfo.update(["_id" : id], ["$pull" : ["projects" : p.bsonID]]);
+		// TODO: Some remove file if not in used. or cron job?
+
+		// VersionInfo.collection.remove(["_id" : id, ""])
+	}
+
+	ProcessedVersion[] versions;
 
 	mixin MongoSchema;
 }
 
 // A project instance for a user
-struct Project {
+@DBCollection struct Project {
 	string name; // dlang/dmd
 
-	// TODO: BsonObjectID[] owners;
-	// or BsonObjectID owner;
+	BsonObjectID owner;
 
 	string lastNotifiedVersion;
 
 	// TODO: Change this to just git
-	// git ls-remove <URL> - will give all the tags and sha1 hashes
-	BsonObjectID githubFile;
-	string githubName;
-	@property Version githubVersion() {
-		import backends.github;
 
-		auto versions = getGitHubVersions(this, ignorePreRelease);
-		return versions.length ? versions[0].version_ : Version.init;
+	string gitName;
+	BsonObjectID gitInfo;
+	//TODO: Return more than one version (incase two tags points to the same commit)
+	@property ProcessedVersion gitVersion() {
+		import std.algorithm : filter;
+		Nullable!VersionInfo v = VersionInfo.tryFindById(gitInfo);
+
+		if (v.isNull)
+			return ProcessedVersion.init;
+
+		import std.algorithm : sort;
+		auto vVersions = v.versions.sort!"a > b";
+
+		if (ignorePreRelease) {
+			auto versions = vVersions.filter!"!a.version_.release.length";
+
+			return !versions.empty ? versions.front : ProcessedVersion.init;
+		} else
+			return vVersions.length ? vVersions[0] : ProcessedVersion.init;
 	}
 
-	///// If this project have a ArchLinux package, fill these out!
-	BsonObjectID archlinuxFile;
 	string archlinuxName; // community/x86_64/dmd
-	@property Version archlinuxVersion() {
-		import backends.archlinux;
+	BsonObjectID archlinuxInfo;
+	@property ProcessedVersion archlinuxVersion() {
+		Nullable!VersionInfo v = VersionInfo.tryFindById(archlinuxInfo);
+		if (v.isNull)
+			return ProcessedVersion.init;
 
-		return getArchlinuxVersion(this);
+		return v.versions.length ? v.versions[0] : ProcessedVersion.init;
 	}
 
 	bool ignorePreRelease = true;
@@ -168,4 +150,21 @@ struct Project {
 	bool notifyViaIRC;
 
 	mixin MongoSchema;
+
+	void triggerUpdate() {
+		import actions.email;
+		import backends.git;
+
+		auto gitV = gitVersion;
+		if (getVersion(lastNotifiedVersion) == gitV.version_) // TODO: <=
+			return;
+
+		User user = User.findById(owner);
+
+		if (notifyViaEmail)
+			sendNewReleaseEmail(user.username, user.email, name, gitV);
+
+		lastNotifiedVersion = gitV.version_.toString;
+		save();
+	}
 }

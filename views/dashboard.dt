@@ -23,7 +23,7 @@ block content
 			- size_t idx; /* DocumentRange does not have a index with it*/
 			- foreach (Project project; projects) /* .sort!"toLower(a.name) < toLower(b.name)"*/
 				- scope(exit) idx++;
-				- bool newRelease = project.archlinuxVersion && project.githubVersion > project.archlinuxVersion;
+				- bool newRelease = project.archlinuxName.length && project.gitVersion > project.archlinuxVersion;
 				- auto style = newRelease ? "m-primary" : "m-flat";
 				tbody
 					tr(class="#{style}")
@@ -33,16 +33,16 @@ block content
 						td
 							i.fab.fa-github
 							|
-							|=project.githubVersion
-							- if (project.archlinuxVersion)
+							|=project.gitVersion.version_
+							- if (project.archlinuxName.length)
 								br
 								- style = "m-text";
-								- if (project.githubVersion > project.archlinuxVersion)
+								- if (project.gitVersion > project.archlinuxVersion)
 									- style ~= " m-danger";
 								p(class="#{style}")
 									i.fab.fl-archlinux
 									|
-									|=project.archlinuxVersion
+									|=project.archlinuxVersion.version_
 						//- td
 							- if (newRelease)
 								div.m-button.m-fullwidth.m-danger.dashboard-info

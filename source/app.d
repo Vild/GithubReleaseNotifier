@@ -16,59 +16,63 @@ shared static this() {
 }
 
 debug Pid chromium;
-void main() {
-	connectToMongo();
+version (unittest) {
+} else {
+	void main() {
+		connectToMongo();
+		setLogLevel(LogLevel.debug_);
 
-	auto settings = new HTTPServerSettings;
-	settings.port = 4000;
-	settings.bindAddresses = ["0.0.0.0"];
-	settings.sessionStore = new MongoSessionStore("mongodb://127.0.0.1/" ~ mongoDBName, "sessions");
-	settings.errorPageHandler = (scope HTTPServerRequest req, HTTPServerResponse res, HTTPServerErrorInfo error) {
-		logError("==HTTP Error %d==
+		auto settings = new HTTPServerSettings;
+		settings.port = 4000;
+		settings.bindAddresses = ["0.0.0.0"];
+		settings.sessionStore = new MongoSessionStore("mongodb://127.0.0.1/" ~ mongoDBName, "sessions");
+		settings.errorPageHandler = (scope HTTPServerRequest req, HTTPServerResponse res, HTTPServerErrorInfo error) {
+			logError("==HTTP Error %d==
 An error has occured. We are really sorry about that!
 Error description:
 \t%s
 Exceptions:
 \t%s\n", error.code, error.debugMessage, error.exception);
-		logError("==HTTP Error %d==
+			logError("==HTTP Error %d==
 An error has occured. We are really sorry about that!
 Error description:
 \t%s
 Exceptions:
 \t%s\n", error.code, error.debugMessage, error.exception);
-		res.render!("error.dt", req, error);
-	};
+			res.render!("error.dt", req, error);
+		};
 
-	auto router = new URLRouter;
-	router.registerWebInterface(new WebInterface);
-	router.get("/quit", (scope HTTPServerRequest req, HTTPServerResponse res) {
-		debug kill(chromium);
-		exitEventLoop(true);
-		res.writeVoidBody;
-	});
-	router.get("*", serveStaticFiles("./public/"));
-	//router.registerRestInterface(new MyAPIImplementation, "/api/");
-
-	listenHTTP(settings, router);
-
-	Cache.startTasks();
-	runWorkerTask(&userCheckUpdates);
-
-	debug {
-		scope (exit)
-			if (!tryWait(chromium).terminated)
-				kill(chromium);
-		runTask({
-			import std.conv : text;
-
-			chromium = spawnShell(
-				"chromium --user-data-dir=/tmp/webdev-chromium-instance --app=http://" ~ settings.bindAddresses[0] ~ ":" ~ settings.port.text ~ "/");
-			while (!tryWait(chromium).terminated)
-				sleep(1.seconds);
-
+		auto router = new URLRouter;
+		router.registerWebInterface(new WebInterface);
+		router.get("/quit", (scope HTTPServerRequest req, HTTPServerResponse res) {
+			debug kill(chromium);
 			exitEventLoop(true);
+			res.writeVoidBody;
 		});
-	}
+		router.get("*", serveStaticFiles("./public/"));
+		//router.registerRestInterface(new MyAPIImplementation, "/api/");
 
-	runApplication();
+		listenHTTP(settings, router);
+
+		Cache.startTasks();
+
+		debug {
+			scope (exit)
+				if (!tryWait(chromium).terminated)
+					kill(chromium);
+			runTask({
+				import std.conv : text;
+
+				chromium = spawnShell(
+					"chromium --user-data-dir=/tmp/webdev-chromium-instance --app=http://" ~ settings.bindAddresses[0] ~ ":" ~ settings.port.text
+					~ "/");
+				while (!tryWait(chromium).terminated)
+					sleep(1.seconds);
+
+				exitEventLoop(true);
+			});
+		}
+
+		runApplication();
+	}
 }

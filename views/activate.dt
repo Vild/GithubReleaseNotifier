@@ -14,7 +14,7 @@ block content
 		input.m-fullwidth(name="code", type="text", placeholder="Activation code")
 		label(for="code") Activation code
 		br
-		- if (error.length)
+		- if (error)
 			p.m-text.m-danger
 				b Error:
 				br

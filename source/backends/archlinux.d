@@ -3,23 +3,22 @@ module backends.archlinux;
 import db;
 import utils.vercmp;
 
-Version getArchlinuxVersion(ref Project project) {
+ProcessedVersion[] getArchlinuxVersion(ref VersionInfo info) {
 	import vibe.data.json;
 	import std.file : readText;
 	import std.conv : text;
+	import std.net.curl : get;
+	import std.exception : assumeUnique;
 
-	if (!project.archlinuxName)
-		return Version();
+	scope (failure)
+		return null;
 
-	// project.archlinuxNameURL ~ "/json/"
-	// https://www.archlinux.org/packages/community/x86_64/dmd/json/
-	// readText("cache/" ~ project.githubName ~ "/arch.json")
-
-	Json archInfo = parseJsonString(cast(string)VersionFile.findById(project.archlinuxFile).data);
+	string data = assumeUnique(get(info.url));
+	Json archInfo = data.parseJsonString;
 
 	// Ignore epoch as this one is arch specific
 	// Ignore release as this one is also arch specific
 	// archInfo["epoch"].integer.text
 	// archInfo["pkgrel"].str
-	return Version(null, archInfo["pkgver"].get!string, null);
+	return [ProcessedVersion(Version(null, archInfo["pkgver"].get!string, null), Bson.emptyObject)];
 }

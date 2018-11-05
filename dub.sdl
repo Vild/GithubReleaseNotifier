@@ -8,7 +8,6 @@ license "MPL-2.0"
 
 dependency "vibe-d" version="~>0.8.4"
 dependency "mongoschemad" version="~>2.6.0"
-dependency "dxml" version="~>0.4.0"
 dependency "sodium:deimos" version="~>0.1.7"
 
 versions "DietUseCache"
@@ -16,3 +15,11 @@ versions "DietUseCache"
 # Forcing vibe-d:tls to use openssl 1.1
 dependency "vibe-d:tls" version="~>0.8.4"
 subConfiguration "vibe-d:tls" "openssl-1.1"
+
+configuration "githubreleasenotifier" {
+	targetType "executable"
+}
+
+configuration "unittest" {
+	dependency "silly" version="~>0.2.0"
+}

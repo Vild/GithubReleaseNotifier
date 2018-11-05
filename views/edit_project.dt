@@ -18,8 +18,8 @@ block content
 			input.m-fullwidth(name="name", type="text", value="#{project.name}", placeholder="Name", required)
 			label(for="name") Name
 			br
-			input.m-fullwidth(name="githubName", type="text", value="#{project.githubName}", placeholder="Github path (dlang/dmd, powernex/powernex, etc.)", required)
-			label(for="githubName") Github path (#[i dlang/dmd], #[i powernex/powernex], etc.)
+			input.m-fullwidth(name="gitName", type="text", value="#{project.gitName}", placeholder="Github path (https://github.com/PowerNex/PowerNex.git, etc.)", required)
+			label(for="gitName") Github path (#[i https://github.com/PowerNex/PowerNex.git], etc.)
 			br
 			br
 			div.m-center
@@ -47,7 +47,7 @@ block content
 			input.big(name="notifyViaIRC", id="notifyViaIRC", type="checkbox", checked=project.notifyViaIRC)
 			label.forceShow(for="notifyViaIRC") Notify via IRC
 			br
-			- if (error.length)
+			- if (error)
 				p.m-text.m-danger
 					b Error:
 					br

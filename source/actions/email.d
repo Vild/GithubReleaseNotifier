@@ -2,7 +2,7 @@ module actions.email;
 import std.format;
 import vibe.core.log;
 import db;
-import backends.github;
+import backends.git;
 
 enum string siteLocation = "http://0.0.0.0:4000/";
 
@@ -26,7 +26,7 @@ Github Release Notifier
 	logInfo(emailData);
 }
 
-void sendNewReleaseEmail(string username, string email, string projectName, GitHubVersion newRelease) {
+void sendNewReleaseEmail(string username, string email, string projectName, ProcessedVersion newRelease) {
 	string emailData = format!`To: %2$s
 From: me@vild.io
 Subject: New release for %4$s - Github Release Notifier
@@ -36,14 +36,15 @@ Hi, %1$s!
 %4$s have released '%5$s'.
 
 Release info:
-\tSemver: %6$s
-\tSHA1:   %7$s
+	Semver: %6$s
+	SHA1:   %7$s
 
 ---
 
 Github Release Notifier
 %3$s
-`(username, email, siteLocation, projectName, newRelease.name, newRelease.version_, newRelease.sha);
+`(username, email, siteLocation, projectName, newRelease.extraData["name"].get!string,
+			newRelease.version_, newRelease.extraData["sha"].get!string);
 
 	logInfo(emailData);
 }

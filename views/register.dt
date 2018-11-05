@@ -29,7 +29,7 @@ block content
 		input.m-fullwidth(name="irc", type="text", value="#{irc}", placeholder="IRC nick on FreeNode")
 		label(for="irc") IRC nick on FreeNode
 		br
-		- if (error.length)
+		- if (error)
 			p.m-text.m-danger
 				b Error:
 				br

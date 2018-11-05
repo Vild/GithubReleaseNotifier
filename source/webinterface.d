@@ -14,8 +14,6 @@ import std.uni;
 import std.exception;
 import actions.email;
 
-// https://github.com/vibe-d/vibe.d/blob/03b85894ff8e88f3f92001c0750f809aa3ccb1f8/examples/web-auth/source/app.d
-
 struct AuthInfo {
 @safe:
 	string username;
@@ -38,6 +36,30 @@ struct AuthInfo {
 	}
 }
 
+struct WebError {
+	Exception ex;
+	string field;
+
+	bool opCast(T : bool)() {
+		return !!ex;
+	}
+
+	void toString(scope void delegate(const(char)[]) @safe sink) const {
+		import std.format : formattedWrite;
+
+		if (!ex)
+			return;
+
+		sink.formattedWrite("%s", ex.msg);
+
+		debug {
+			sink.formattedWrite("ex: ");
+			ex.toString(sink);
+			sink.formattedWrite("field: %s", field);
+		}
+	}
+}
+
 @requiresAuth class WebInterface {
 private:
 	enum _pwOpsLimit = crypto_pwhash_OPSLIMIT_INTERACTIVE;
@@ -46,16 +68,6 @@ public:
 	this() {
 		sodium_init();
 		connectToMongo();
-
-		if (!VersionFile.countAll()) {
-			// dfmt off
-			VersionFile[] files = [
-				VersionFile("https://www.archlinux.org/packages/community/x86_64/dmd/json/", null, 0)
-			];
-			// dfmt on
-			foreach (ref file; files)
-				file.save();
-		}
 	}
 
 	@noRoute AuthInfo authenticate(scope HTTPServerRequest req, scope HTTPServerResponse res) @safe {
@@ -75,8 +87,8 @@ public:
 			render!("index.dt", auth);
 		}
 
-		void getLogin(scope HTTPServerRequest req, string _error = null) {
-			string error = _error;
+		void getLogin(scope HTTPServerRequest req, WebError _error = WebError()) {
+			WebError error = _error;
 			Nullable!AuthInfo auth;
 			string from = "/";
 			if (auto _ = "from" in req.query)
@@ -125,8 +137,8 @@ public:
 			redirect(from);
 		}
 
-		void getRegister(scope HTTPServerRequest req, string _error = null) {
-			string error = _error;
+		void getRegister(scope HTTPServerRequest req, WebError _error = WebError()) {
+			WebError error = _error;
 			Nullable!AuthInfo auth;
 			string from = "/";
 			if (auto _ = "from" in req.query)
@@ -178,8 +190,8 @@ public:
 			redirect("/activate?from=" ~ from ~ "&username=" ~ username);
 		}
 
-		@errorDisplay!getActivate void getActivate(scope HTTPServerRequest req, string _error = null) {
-			string error = _error;
+		@errorDisplay!getActivate void getActivate(scope HTTPServerRequest req, WebError _error = WebError()) {
+			WebError error = _error;
 			Nullable!AuthInfo auth;
 			string from = "/";
 			if (auto _ = "from" in req.query)
@@ -230,6 +242,8 @@ public:
 
 	@anyAuth {
 		void getDashboard(AuthInfo auth, scope HTTPServerRequest req) {
+			import std.array : array;
+
 			auto query(Q, S)(Q q, S s) {
 				struct Query(Q, S) {
 					Q query;
@@ -239,46 +253,50 @@ public:
 				return Query!(Q, S)(q, s);
 			}
 
-			auto projects = Project.findRange(query(["_id" : ["$in" : auth.user.projects]], ["name" : 1]));
+			auto projects = Project.findRange(query(["owner" : auth.userID], ["name" : 1])).array;
 			render!("dashboard.dt", auth, projects);
 		}
 
 		@path("/project/:projectName")
-		@errorDisplay!getEditProject void postEditProject(AuthInfo auth, string _projectName, string name, string githubName,
+		@errorDisplay!getEditProject void postEditProject(AuthInfo auth, string _projectName, string name, string gitName,
 				bool ignorePreRelease, bool notifyViaEmail, bool notifyViaIRC, string archlinuxName, scope HTTPServerRequest req) {
 			import std.algorithm : count;
 			import std.format : format;
 
 			string projectName = _projectName;
 
-			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]).find!"a.name == b"(projectName);
+			auto projects = Project.findRange(["owner" : auth.userID]).find!"a.name == b"(projectName);
 			enforce(!projects.empty, "Project is missing!");
 			Project p = projects.front;
 
-			enforce(githubName.count("/") == 1, format!"Github path is in the wrong format! count: %d"(githubName.count("/")));
+			//TODO: enforce(gitName.count("/") == 1, format!"Git path is in the wrong format! count: %d"(gitName.count("/")));
 			enforce(!archlinuxName || archlinuxName.count("/") == 2,
 					format!"The Archlinux path is in the wrong format! %s count: %d"(!archlinuxName, archlinuxName.count("/")));
 
+			BsonObjectID oldGitInfo = p.gitInfo;
+			BsonObjectID oldArchlinuxInfo = p.archlinuxInfo;
+
 			p.name = name;
-			p.githubName = githubName;
-			if (p.githubName.length) {
+			p.gitName = gitName;
+			if (p.gitName.length) {
 				import db.cache;
 
-				auto id = addToCacheGithub(githubName);
-				enforce(!id.isNull, "The github name is wrong!");
-				p.githubFile = id.get();
+				Nullable!BsonObjectID info = constructVersionInfo(p.gitName, RemoteSite.git);
+				enforce(!info.isNull, "Git path is wrong! Does the git repo exist?");
+				p.gitInfo = info.get();
 			} else
-				p.githubFile = BsonObjectID.init;
+				p.gitInfo = BsonObjectID.init;
 
 			p.archlinuxName = archlinuxName;
 			if (p.archlinuxName.length) {
 				import db.cache;
 
-				auto id = addToCacheFile("https://www.archlinux.org/packages/" ~ archlinuxName ~ "/json/");
-				enforce(!id.isNull, "The Archlinux name is wrong!");
-				p.archlinuxFile = id.get();
+				Nullable!BsonObjectID info = constructVersionInfo("https://www.archlinux.org/packages/" ~ archlinuxName ~ "/json/",
+						RemoteSite.archlinux);
+				enforce(!info.isNull, "Archlinux path is wrong! Does the package exist?");
+				p.archlinuxInfo = info.get();
 			} else
-				p.archlinuxFile = BsonObjectID.init;
+				p.archlinuxInfo = BsonObjectID.init;
 
 			p.ignorePreRelease = ignorePreRelease;
 
@@ -287,17 +305,31 @@ public:
 
 			p.save();
 
+			if (oldGitInfo != p.gitInfo) {
+				if (oldGitInfo.valid)
+					VersionInfo.removeProject(oldGitInfo, p);
+				if (p.gitInfo.valid)
+					VersionInfo.addProject(p.gitInfo, p);
+			}
+
+			if (oldArchlinuxInfo != p.archlinuxInfo) {
+				if (oldArchlinuxInfo.valid)
+					VersionInfo.removeProject(oldArchlinuxInfo, p);
+				if (p.archlinuxInfo.valid)
+					VersionInfo.addProject(p.archlinuxInfo, p);
+			}
+
 			redirect("/dashboard");
 		}
 
 		@path("/project/:projectName")
-		void getEditProject(AuthInfo auth, string _projectName, scope HTTPServerRequest req, string _error = null) {
+		void getEditProject(AuthInfo auth, string _projectName, scope HTTPServerRequest req, WebError _error = WebError()) {
 			import std.algorithm : find;
 
-			string error = _error;
+			WebError error = _error;
 			string projectName = _projectName;
 
-			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]).find!"a.name == b"(projectName);
+			auto projects = Project.findRange(["owner" : auth.userID]).find!"a.name == b"(projectName);
 			Nullable!Project project;
 			if (!projects.empty)
 				project = projects.front;
@@ -310,30 +342,25 @@ public:
 
 			string projectName = _projectName;
 
-			auto projects = Project.findRange(["_id" : ["$in" : auth.user.projects]]).find!"a.name == b"(projectName);
+			auto projects = Project.findRange(["owner" : auth.userID]).find!"a.name == b"(projectName);
 			if (projects.empty)
 				redirect("/dashboard");
 
 			Project p = projects.front;
-
-			auto user = auth.user;
-			user.projects = user.projects.remove(user.projects.countUntil(p.bsonID));
-			user.save();
-
 			p.remove();
 
 			redirect("/dashboard");
 		}
 
-		void getAddProject(AuthInfo auth, scope HTTPServerRequest req, string _error = null) {
-			string error = _error;
+		void getAddProject(AuthInfo auth, scope HTTPServerRequest req, WebError _error = WebError()) {
+			WebError error = _error;
 			string name;
 			if (auto _ = "name" in req.form)
 				name = *_;
 
-			string githubName;
-			if (auto _ = "githubName" in req.form)
-				githubName = *_;
+			string gitName;
+			if (auto _ = "gitName" in req.form)
+				gitName = *_;
 
 			bool ignorePreRelease = !("name" in req.form) || !!("ignorePreRelease" in req.form);
 
@@ -344,37 +371,42 @@ public:
 			if (auto _ = "archlinuxName" in req.form)
 				archlinuxName = *_;
 
-			render!("add_project.dt", auth, name, githubName, ignorePreRelease, notifyViaEmail, notifyViaIRC, archlinuxName, error);
+			render!("add_project.dt", auth, name, gitName, ignorePreRelease, notifyViaEmail, notifyViaIRC, archlinuxName, error);
 		}
 
-		@errorDisplay!getAddProject void postAddProject(AuthInfo auth, string name, string githubName, bool ignorePreRelease,
+		@errorDisplay!getAddProject void postAddProject(AuthInfo auth, string name, string gitName, bool ignorePreRelease,
 				bool notifyViaEmail, bool notifyViaIRC, string archlinuxName, scope HTTPServerRequest req) {
 			import std.algorithm : count;
 			import std.format : format;
 
-			enforce(githubName.count("/") == 1, format!"Github path is in the wrong format! count: %d"(githubName.count("/")));
+			//TODO: enforce(gitName.count("/") == 1, );
 			enforce(!archlinuxName || archlinuxName.count("/") == 2,
 					format!"The Archlinux path is in the wrong format! %s count: %d"(!archlinuxName, archlinuxName.count("/")));
 
 			Project p;
 			p.name = name;
-			p.githubName = githubName;
-			if (p.githubName.length) {
+			p.owner = auth.userID;
+
+			p.gitName = gitName;
+			if (p.gitName.length) {
 				import db.cache;
 
-				auto id = addToCacheGithub(githubName);
-				enforce(!id.isNull, "The github name is wrong!");
-				p.githubFile = id.get();
-			}
+				Nullable!BsonObjectID info = constructVersionInfo(p.gitName, RemoteSite.git);
+				enforce(!info.isNull, "Git path is wrong! Does the git repo exist?");
+				p.gitInfo = info.get();
+			} else
+				p.gitInfo = BsonObjectID.init;
 
 			p.archlinuxName = archlinuxName;
 			if (p.archlinuxName.length) {
 				import db.cache;
 
-				auto id = addToCacheFile("https://www.archlinux.org/packages/" ~ archlinuxName ~ "/json/");
-				enforce(!id.isNull, "The Archlinux name is wrong!");
-				p.archlinuxFile = id.get();
-			}
+				Nullable!BsonObjectID info = constructVersionInfo("https://www.archlinux.org/packages/" ~ archlinuxName ~ "/json/",
+						RemoteSite.archlinux);
+				enforce(!info.isNull, "Archlinux path is wrong! Does the package exist?");
+				p.archlinuxInfo = info.get();
+			} else
+				p.archlinuxInfo = BsonObjectID.init;
 
 			p.ignorePreRelease = ignorePreRelease;
 
@@ -383,9 +415,10 @@ public:
 
 			p.save();
 
-			User user = auth.user;
-			user.projects ~= p.bsonID;
-			user.save();
+			if (p.gitInfo.valid)
+				VersionInfo.addProject(p.gitInfo, p);
+			if (p.archlinuxInfo.valid)
+				VersionInfo.addProject(p.archlinuxInfo, p);
 
 			redirect("/dashboard");
 		}

@@ -13,7 +13,7 @@ block content
 		input.m-fullwidth#password(name="password", type="password", placeholder="Password")
 		label(for="password") Password
 		br
-		- if (error.length)
+		- if (error)
 			p.m-text.m-danger
 				b Error:
 				br
