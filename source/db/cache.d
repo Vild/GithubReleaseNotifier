@@ -26,7 +26,10 @@ private:
 		while (true) {
 			long currentTime = Clock.currTime.toUnixTime!long;
 			foreach (VersionInfo file; VersionInfo.findRange(["lastUpdated" : ["$lte" : (currentTime - 30 * 60)]])) {
-				logInfo("[%s] Checking: %s", file.remoteSite, file.url);
+				import std.utf : validate;
+
+				validate(file.url);
+				logInfo("[%s] Checking: '%s'", file.remoteSite, file.url);
 				final switch (file.remoteSite) {
 				case RemoteSite.git:
 					import backends.git;
@@ -38,6 +41,11 @@ private:
 
 					file.versions = getArchlinuxVersion(file);
 					break;
+				}
+
+				if (!file.versions.length) {
+					logWarn("\tFailed to get data!");
+					continue;
 				}
 
 				file.lastUpdated = currentTime;

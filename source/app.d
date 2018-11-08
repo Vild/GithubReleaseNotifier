@@ -8,7 +8,7 @@ import db.cache;
 
 import std.process : spawnShell, tryWait, kill, Pid;
 
-shared static this() {
+version (DigitalMars) shared static this() {
 	import etc.linux.memoryerror;
 
 	static if (is(typeof(registerMemoryErrorHandler)))

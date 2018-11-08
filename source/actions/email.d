@@ -6,7 +6,9 @@ import backends.git;
 
 enum string siteLocation = "http://0.0.0.0:4000/";
 
-void sendActivationEmail(string username, string email, uint code) {
+bool sendActivationEmail(string username, string email, uint code) {
+	scope (failure)
+		return false;
 	string emailData = format!`To: %2$s
 From: me@vild.io
 Subject: Activation code for Github Release Notififer
@@ -24,9 +26,15 @@ Github Release Notifier
 `(username, email, siteLocation, code);
 
 	logInfo(emailData);
+	return true;
 }
 
-void sendNewReleaseEmail(string username, string email, string projectName, ProcessedVersion newRelease) {
+bool sendNewReleaseEmail(string username, string email, string projectName, ProcessedVersion newRelease) {
+	scope (failure)
+		return false;
+
+	logDebug("newRelease: %s", newRelease);
+
 	string emailData = format!`To: %2$s
 From: me@vild.io
 Subject: New release for %4$s - Github Release Notifier
@@ -37,7 +45,7 @@ Hi, %1$s!
 
 Release info:
 	Semver: %6$s
-	SHA1:   %7$s
+	SHA:    %7$s
 
 ---
 
@@ -47,4 +55,5 @@ Github Release Notifier
 			newRelease.version_, newRelease.extraData["sha"].get!string);
 
 	logInfo(emailData);
+	return true;
 }

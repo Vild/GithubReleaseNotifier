@@ -362,10 +362,13 @@ public:
 			if (auto _ = "gitName" in req.form)
 				gitName = *_;
 
-			bool ignorePreRelease = !("name" in req.form) || !!("ignorePreRelease" in req.form);
+			// Is this the best way of detecting this?
+			bool firstTime = !("name" in req.form);
 
-			bool notifyViaEmail = !!("notifyViaEmail" in req.form);
-			bool notifyViaIRC = !!("notifyViaIRC" in req.form);
+			bool ignorePreRelease = firstTime || !!("ignorePreRelease" in req.form);
+
+			bool notifyViaEmail = firstTime || !!("notifyViaEmail" in req.form);
+			bool notifyViaIRC = firstTime || !!("notifyViaIRC" in req.form);
 
 			string archlinuxName;
 			if (auto _ = "archlinuxName" in req.form)
