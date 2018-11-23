@@ -52,8 +52,11 @@ private:
 				file.save();
 
 				foreach (BsonObjectID pId; file.projects) {
-					Project p = Project.findById(pId);
-					p.triggerUpdate();
+					Nullable!Project p = Project.tryFindById(pId);
+					if (!p.isNull)
+						p.get.triggerUpdate();
+					else
+						logWarn("Project '%s' is missing. Probably forgot to remove it from the VersionFile (%s)", pId, file.bsonID);
 				}
 				yield();
 			}

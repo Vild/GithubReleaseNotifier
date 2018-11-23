@@ -6,14 +6,16 @@ authors "Dan Printzell"
 copyright "Copyright © 2018, Dan Printzell"
 license "MPL-2.0"
 
-dependency "vibe-d" version="~>0.8.4"
+//dependency "vibe-d" version="~>0.8.4"
+dependency "vibe-d" path="../vibe.d"
 dependency "mongoschemad" version="~>2.6.0"
 dependency "sodium:deimos" version="~>0.1.7"
 
 versions "DietUseCache"
 
 # Forcing vibe-d:tls to use openssl 1.1
-dependency "vibe-d:tls" version="~>0.8.4"
+//dependency "vibe-d:tls" version="~>0.8.4"
+dependency "vibe-d:tls" path="../vibe.d"
 subConfiguration "vibe-d:tls" "openssl-1.1"
 
 configuration "githubreleasenotifier" {
